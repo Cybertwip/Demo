@@ -1,0 +1,17 @@
+{
+  "algorithm": "Zstandard",
+  "assetFetchPolicy": "indexed-on-demand",
+  "chunkBytes": 4194304,
+  "chunks": 165,
+  "decodedCacheBytes": 67108864,
+  "deduplicatedBytes": 25809960,
+  "downloadBytes": 358533598,
+  "files": 27651,
+  "level": 22,
+  "originalBytes": 711922500,
+  "paddingBytes": 2229853,
+  "persistentBrowserCache": true,
+  "reusedBakedChunks": 152,
+  "uniqueBytes": 686112540,
+  "uniqueChunks": 165
+}

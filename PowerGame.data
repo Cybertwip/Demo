@@ -1,0 +1,4420 @@
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = v_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    float depth;
+} _22;
+
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+
+void main()
+{
+    gl_Position = a_position;
+    gl_Position.z = _22.depth;
+    gl_Position.w = 1.0;
+    v_texCoord = a_texCoord;
+    v_color = a_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_DirLightSourceColor[1];
+    highp vec4 u_DirLightSourceDirection[1];
+    highp vec4 u_PointLightSourceColor[1];
+    highp vec4 u_PointLightSourceRangeInverse[1];
+    highp vec4 u_SpotLightSourceColor[1];
+    highp vec4 u_SpotLightSourceDirection[1];
+    highp vec4 u_SpotLightSourceInnerAngleCos[1];
+    highp vec4 u_SpotLightSourceOuterAngleCos[1];
+    highp vec4 u_SpotLightSourceRangeInverse[1];
+    highp vec3 u_AmbientLightSourceColor;
+    highp vec4 u_color;
+} _56;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec3 v_normal;
+in highp vec3 v_vertexToPointLightDirection[1];
+in highp vec3 v_vertexToSpotLightDirection[1];
+layout(location = 0) out highp vec4 FragColor;
+in highp vec2 v_texCoord;
+
+highp vec3 computeLighting(highp vec3 normalVector, highp vec3 lightDirection, highp vec3 lightColor, highp float attenuation)
+{
+    highp float diffuse = max(dot(normalVector, lightDirection), 0.0);
+    highp vec3 diffuseColor = (lightColor * diffuse) * attenuation;
+    return diffuseColor;
+}
+
+void main()
+{
+    highp vec3 normal = normalize(v_normal);
+    highp vec4 combinedColor = vec4(_56.u_AmbientLightSourceColor, 1.0);
+    for (int i = 0; i < 1; i++)
+    {
+        highp vec3 lightDirection = normalize(vec3(_56.u_DirLightSourceDirection[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _56.u_DirLightSourceDirection[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _56.u_DirLightSourceDirection[((i * 3) + 2) / 4][((i * 3) + 2) % 4]) * 2.0);
+        highp vec3 param = normal;
+        highp vec3 param_1 = -lightDirection;
+        highp vec3 param_2 = vec3(_56.u_DirLightSourceColor[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _56.u_DirLightSourceColor[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _56.u_DirLightSourceColor[((i * 3) + 2) / 4][((i * 3) + 2) % 4]);
+        highp float param_3 = 1.0;
+        highp vec4 _157 = combinedColor;
+        highp vec3 _159 = _157.xyz + computeLighting(param, param_1, param_2, param_3);
+        combinedColor.x = _159.x;
+        combinedColor.y = _159.y;
+        combinedColor.z = _159.z;
+    }
+    for (int i_1 = 0; i_1 < 1; i_1++)
+    {
+        highp vec3 ldir = v_vertexToPointLightDirection[i_1] * _56.u_PointLightSourceRangeInverse[i_1 / 4][i_1 % 4];
+        highp float attenuation = clamp(1.0 - dot(ldir, ldir), 0.0, 1.0);
+        highp vec3 param_4 = normal;
+        highp vec3 param_5 = normalize(v_vertexToPointLightDirection[i_1]);
+        highp vec3 param_6 = vec3(_56.u_PointLightSourceColor[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _56.u_PointLightSourceColor[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _56.u_PointLightSourceColor[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]);
+        highp float param_7 = attenuation;
+        highp vec4 _240 = combinedColor;
+        highp vec3 _242 = _240.xyz + computeLighting(param_4, param_5, param_6, param_7);
+        combinedColor.x = _242.x;
+        combinedColor.y = _242.y;
+        combinedColor.z = _242.z;
+    }
+    for (int i_2 = 0; i_2 < 1; i_2++)
+    {
+        highp vec3 ldir_1 = v_vertexToSpotLightDirection[i_2] * _56.u_SpotLightSourceRangeInverse[i_2 / 4][i_2 % 4];
+        highp float attenuation_1 = clamp(1.0 - dot(ldir_1, ldir_1), 0.0, 1.0);
+        highp vec3 vertexToSpotLightDirection = normalize(v_vertexToSpotLightDirection[i_2]);
+        highp vec3 spotLightDirection = normalize(vec3(_56.u_SpotLightSourceDirection[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _56.u_SpotLightSourceDirection[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _56.u_SpotLightSourceDirection[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) * 2.0);
+        highp float spotCurrentAngleCos = dot(spotLightDirection, -vertexToSpotLightDirection);
+        attenuation_1 *= smoothstep(_56.u_SpotLightSourceOuterAngleCos[i_2 / 4][i_2 % 4], _56.u_SpotLightSourceInnerAngleCos[i_2 / 4][i_2 % 4], spotCurrentAngleCos);
+        attenuation_1 = clamp(attenuation_1, 0.0, 1.0);
+        highp vec3 param_8 = normal;
+        highp vec3 param_9 = vertexToSpotLightDirection;
+        highp vec3 param_10 = vec3(_56.u_SpotLightSourceColor[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _56.u_SpotLightSourceColor[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _56.u_SpotLightSourceColor[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]);
+        highp float param_11 = attenuation_1;
+        highp vec4 _382 = combinedColor;
+        highp vec3 _384 = _382.xyz + computeLighting(param_8, param_9, param_10, param_11);
+        combinedColor.x = _384.x;
+        combinedColor.y = _384.y;
+        combinedColor.z = _384.z;
+    }
+    FragColor = (texture(u_tex0, v_texCoord) * _56.u_color) * combinedColor;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_DirLightSourceColor[1];
+    highp vec4 u_DirLightSourceDirection[1];
+    highp vec4 u_PointLightSourceColor[1];
+    highp vec4 u_PointLightSourceRangeInverse[1];
+    highp vec4 u_SpotLightSourceColor[1];
+    highp vec4 u_SpotLightSourceDirection[1];
+    highp vec4 u_SpotLightSourceInnerAngleCos[1];
+    highp vec4 u_SpotLightSourceOuterAngleCos[1];
+    highp vec4 u_SpotLightSourceRangeInverse[1];
+    highp vec3 u_AmbientLightSourceColor;
+    highp vec4 u_color;
+} _69;
+
+uniform mediump sampler2D u_normalTex;
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+in highp vec3 v_dirLightDirection[1];
+in highp vec3 v_vertexToPointLightDirection[1];
+in highp vec3 v_vertexToSpotLightDirection[1];
+in highp vec3 v_spotLightDirection[1];
+layout(location = 0) out highp vec4 FragColor;
+
+highp vec3 computeLighting(highp vec3 normalVector, highp vec3 lightDirection, highp vec3 lightColor, highp float attenuation)
+{
+    highp float diffuse = max(dot(normalVector, lightDirection), 0.0);
+    highp vec3 diffuseColor = (lightColor * diffuse) * attenuation;
+    return diffuseColor;
+}
+
+void main()
+{
+    highp vec3 normal = normalize((texture(u_normalTex, v_texCoord).xyz * 2.0) - vec3(1.0));
+    highp vec4 combinedColor = vec4(_69.u_AmbientLightSourceColor, 1.0);
+    for (int i = 0; i < 1; i++)
+    {
+        highp vec3 lightDirection = normalize(v_dirLightDirection[i] * 2.0);
+        highp vec3 param = normal;
+        highp vec3 param_1 = -lightDirection;
+        highp vec3 param_2 = vec3(_69.u_DirLightSourceColor[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _69.u_DirLightSourceColor[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _69.u_DirLightSourceColor[((i * 3) + 2) / 4][((i * 3) + 2) % 4]);
+        highp float param_3 = 1.0;
+        highp vec4 _144 = combinedColor;
+        highp vec3 _146 = _144.xyz + computeLighting(param, param_1, param_2, param_3);
+        combinedColor.x = _146.x;
+        combinedColor.y = _146.y;
+        combinedColor.z = _146.z;
+    }
+    for (int i_1 = 0; i_1 < 1; i_1++)
+    {
+        highp vec3 ldir = v_vertexToPointLightDirection[i_1] * _69.u_PointLightSourceRangeInverse[i_1 / 4][i_1 % 4];
+        highp float attenuation = clamp(1.0 - dot(ldir, ldir), 0.0, 1.0);
+        highp vec3 param_4 = normal;
+        highp vec3 param_5 = normalize(v_vertexToPointLightDirection[i_1]);
+        highp vec3 param_6 = vec3(_69.u_PointLightSourceColor[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _69.u_PointLightSourceColor[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _69.u_PointLightSourceColor[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]);
+        highp float param_7 = attenuation;
+        highp vec4 _225 = combinedColor;
+        highp vec3 _227 = _225.xyz + computeLighting(param_4, param_5, param_6, param_7);
+        combinedColor.x = _227.x;
+        combinedColor.y = _227.y;
+        combinedColor.z = _227.z;
+    }
+    for (int i_2 = 0; i_2 < 1; i_2++)
+    {
+        highp vec3 ldir_1 = v_vertexToSpotLightDirection[i_2] * _69.u_SpotLightSourceRangeInverse[i_2 / 4][i_2 % 4];
+        highp float attenuation_1 = clamp(1.0 - dot(ldir_1, ldir_1), 0.0, 1.0);
+        highp vec3 vertexToSpotLightDirection = normalize(v_vertexToSpotLightDirection[i_2]);
+        highp vec3 spotLightDirection = normalize(v_spotLightDirection[i_2] * 2.0);
+        highp float spotCurrentAngleCos = dot(spotLightDirection, -vertexToSpotLightDirection);
+        attenuation_1 *= smoothstep(_69.u_SpotLightSourceOuterAngleCos[i_2 / 4][i_2 % 4], _69.u_SpotLightSourceInnerAngleCos[i_2 / 4][i_2 % 4], spotCurrentAngleCos);
+        attenuation_1 = clamp(attenuation_1, 0.0, 1.0);
+        highp vec3 param_8 = normal;
+        highp vec3 param_9 = vertexToSpotLightDirection;
+        highp vec3 param_10 = vec3(_69.u_SpotLightSourceColor[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _69.u_SpotLightSourceColor[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _69.u_SpotLightSourceColor[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]);
+        highp float param_11 = attenuation_1;
+        highp vec4 _339 = combinedColor;
+        highp vec3 _341 = _339.xyz + computeLighting(param_8, param_9, param_10, param_11);
+        combinedColor.x = _341.x;
+        combinedColor.y = _341.y;
+        combinedColor.z = _341.z;
+    }
+    FragColor = (texture(u_tex0, v_texCoord) * _69.u_color) * combinedColor;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_DirLightSourceColor[1];
+    highp vec4 u_DirLightSourceDirection[1];
+    highp vec4 u_PointLightSourceColor[1];
+    highp vec4 u_PointLightSourceRangeInverse[1];
+    highp vec4 u_SpotLightSourceColor[1];
+    highp vec4 u_SpotLightSourceDirection[1];
+    highp vec4 u_SpotLightSourceInnerAngleCos[1];
+    highp vec4 u_SpotLightSourceOuterAngleCos[1];
+    highp vec4 u_SpotLightSourceRangeInverse[1];
+    highp vec3 u_AmbientLightSourceColor;
+    highp vec4 u_color;
+} _56;
+
+in highp vec3 v_normal;
+in highp vec3 v_vertexToPointLightDirection[1];
+in highp vec3 v_vertexToSpotLightDirection[1];
+layout(location = 0) out highp vec4 FragColor;
+in highp vec2 v_texCoord;
+
+highp vec3 computeLighting(highp vec3 normalVector, highp vec3 lightDirection, highp vec3 lightColor, highp float attenuation)
+{
+    highp float diffuse = max(dot(normalVector, lightDirection), 0.0);
+    highp vec3 diffuseColor = (lightColor * diffuse) * attenuation;
+    return diffuseColor;
+}
+
+void main()
+{
+    highp vec3 normal = normalize(v_normal);
+    highp vec4 combinedColor = vec4(_56.u_AmbientLightSourceColor, 1.0);
+    for (int i = 0; i < 1; i++)
+    {
+        highp vec3 lightDirection = normalize(vec3(_56.u_DirLightSourceDirection[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _56.u_DirLightSourceDirection[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _56.u_DirLightSourceDirection[((i * 3) + 2) / 4][((i * 3) + 2) % 4]) * 2.0);
+        highp vec3 param = normal;
+        highp vec3 param_1 = -lightDirection;
+        highp vec3 param_2 = vec3(_56.u_DirLightSourceColor[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _56.u_DirLightSourceColor[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _56.u_DirLightSourceColor[((i * 3) + 2) / 4][((i * 3) + 2) % 4]);
+        highp float param_3 = 1.0;
+        highp vec4 _157 = combinedColor;
+        highp vec3 _159 = _157.xyz + computeLighting(param, param_1, param_2, param_3);
+        combinedColor.x = _159.x;
+        combinedColor.y = _159.y;
+        combinedColor.z = _159.z;
+    }
+    for (int i_1 = 0; i_1 < 1; i_1++)
+    {
+        highp vec3 ldir = v_vertexToPointLightDirection[i_1] * _56.u_PointLightSourceRangeInverse[i_1 / 4][i_1 % 4];
+        highp float attenuation = clamp(1.0 - dot(ldir, ldir), 0.0, 1.0);
+        highp vec3 param_4 = normal;
+        highp vec3 param_5 = normalize(v_vertexToPointLightDirection[i_1]);
+        highp vec3 param_6 = vec3(_56.u_PointLightSourceColor[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _56.u_PointLightSourceColor[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _56.u_PointLightSourceColor[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]);
+        highp float param_7 = attenuation;
+        highp vec4 _240 = combinedColor;
+        highp vec3 _242 = _240.xyz + computeLighting(param_4, param_5, param_6, param_7);
+        combinedColor.x = _242.x;
+        combinedColor.y = _242.y;
+        combinedColor.z = _242.z;
+    }
+    for (int i_2 = 0; i_2 < 1; i_2++)
+    {
+        highp vec3 ldir_1 = v_vertexToSpotLightDirection[i_2] * _56.u_SpotLightSourceRangeInverse[i_2 / 4][i_2 % 4];
+        highp float attenuation_1 = clamp(1.0 - dot(ldir_1, ldir_1), 0.0, 1.0);
+        highp vec3 vertexToSpotLightDirection = normalize(v_vertexToSpotLightDirection[i_2]);
+        highp vec3 spotLightDirection = normalize(vec3(_56.u_SpotLightSourceDirection[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _56.u_SpotLightSourceDirection[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _56.u_SpotLightSourceDirection[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) * 2.0);
+        highp float spotCurrentAngleCos = dot(spotLightDirection, -vertexToSpotLightDirection);
+        attenuation_1 *= smoothstep(_56.u_SpotLightSourceOuterAngleCos[i_2 / 4][i_2 % 4], _56.u_SpotLightSourceInnerAngleCos[i_2 / 4][i_2 % 4], spotCurrentAngleCos);
+        attenuation_1 = clamp(attenuation_1, 0.0, 1.0);
+        highp vec3 param_8 = normal;
+        highp vec3 param_9 = vertexToSpotLightDirection;
+        highp vec3 param_10 = vec3(_56.u_SpotLightSourceColor[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _56.u_SpotLightSourceColor[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _56.u_SpotLightSourceColor[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]);
+        highp float param_11 = attenuation_1;
+        highp vec4 _382 = combinedColor;
+        highp vec3 _384 = _382.xyz + computeLighting(param_8, param_9, param_10, param_11);
+        combinedColor.x = _384.x;
+        combinedColor.y = _384.y;
+        combinedColor.z = _384.z;
+    }
+    FragColor = _56.u_color * combinedColor;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+} _24;
+
+uniform mediump sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = texture(u_tex0, v_texCoord) * _24.u_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+} _14;
+
+layout(location = 0) out highp vec4 FragColor;
+
+void main()
+{
+    FragColor = _14.u_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform GlobalData
+{
+    highp float u_time;
+    int u_nodeCount;
+    int u_outputType;
+    int _pad0;
+    highp vec4 u_spriteUVRect;
+    ivec4 u_packedParams[24];
+    ivec4 u_inNodes[24];
+    ivec4 u_inComps[24];
+    highp vec4 u_consts[24];
+    highp vec4 u_outMasks[24];
+} _46;
+
+uniform highp sampler2D u_tex1;
+uniform highp sampler2D u_tex2;
+uniform highp sampler2D u_tex3;
+uniform highp sampler2D u_tex4;
+uniform highp sampler2D u_tex5;
+uniform highp sampler2D u_tex6;
+uniform highp sampler2D u_tex7;
+uniform highp sampler2D u_texture;
+
+in highp vec2 v_texCoord;
+in highp vec4 v_fragmentColor;
+layout(location = 0) out highp vec4 FragColor;
+highp vec4 outVals[24];
+
+highp vec4 readIn(int idx, int pinIdx, highp vec4 defVal)
+{
+    int node = -1;
+    int comp = 4;
+    if (pinIdx == 0)
+    {
+        node = _46.u_inNodes[idx].x;
+        comp = _46.u_inComps[idx].x;
+    }
+    else
+    {
+        if (pinIdx == 1)
+        {
+            node = _46.u_inNodes[idx].y;
+            comp = _46.u_inComps[idx].y;
+        }
+        else
+        {
+            if (pinIdx == 2)
+            {
+                node = _46.u_inNodes[idx].z;
+                comp = _46.u_inComps[idx].z;
+            }
+            else
+            {
+                if (pinIdx == 3)
+                {
+                    node = _46.u_inNodes[idx].w;
+                    comp = _46.u_inComps[idx].w;
+                }
+                else
+                {
+                    if (pinIdx == 4)
+                    {
+                        node = _46.u_packedParams[idx].y;
+                        comp = _46.u_packedParams[idx].z;
+                    }
+                }
+            }
+        }
+    }
+    if ((node < 0) || (node >= 24))
+    {
+        return defVal;
+    }
+    highp vec4 val = outVals[node];
+    if (comp == 0)
+    {
+        return vec4(val.x);
+    }
+    if (comp == 1)
+    {
+        return vec4(val.y);
+    }
+    if (comp == 2)
+    {
+        return vec4(val.z);
+    }
+    if (comp == 3)
+    {
+        return vec4(val.w);
+    }
+    return val;
+}
+
+highp vec4 sampleTexture(int slot, highp vec2 uv)
+{
+    if (slot == 1)
+    {
+        return texture(u_tex1, uv);
+    }
+    if (slot == 2)
+    {
+        return texture(u_tex2, uv);
+    }
+    if (slot == 3)
+    {
+        return texture(u_tex3, uv);
+    }
+    if (slot == 4)
+    {
+        return texture(u_tex4, uv);
+    }
+    if (slot == 5)
+    {
+        return texture(u_tex5, uv);
+    }
+    if (slot == 6)
+    {
+        return texture(u_tex6, uv);
+    }
+    if (slot == 7)
+    {
+        return texture(u_tex7, uv);
+    }
+    return texture(u_texture, uv);
+}
+
+void main()
+{
+    highp vec4 finalColor = vec4(1.0, 0.0, 1.0, 1.0);
+    int limit = clamp(_46.u_nodeCount, 0, 24);
+    highp vec2 uvSize = max(_46.u_spriteUVRect.zw, vec2(9.9999997473787516355514526367188e-06));
+    highp vec2 localUV = (v_texCoord - _46.u_spriteUVRect.xy) / uvSize;
+    for (int i = 0; i < 24; i++)
+    {
+        if (i >= limit)
+        {
+            break;
+        }
+        int op = _46.u_packedParams[i].x;
+        highp vec4 res = vec4(0.0);
+        if (op == 0)
+        {
+            int param = i;
+            int param_1 = 0;
+            highp vec4 param_2 = finalColor;
+            finalColor = readIn(param, param_1, param_2);
+        }
+        else
+        {
+            if (op == 1)
+            {
+                int param_3 = i;
+                int param_4 = 0;
+                highp vec4 param_5 = vec4(localUV, 0.0, 0.0);
+                highp vec2 sampledLocalUV = readIn(param_3, param_4, param_5).xy;
+                sampledLocalUV = fract(sampledLocalUV);
+                highp vec2 atlasUV = (sampledLocalUV * _46.u_spriteUVRect.zw) + _46.u_spriteUVRect.xy;
+                int param_6 = _46.u_packedParams[i].w;
+                highp vec2 param_7 = atlasUV;
+                res = sampleTexture(param_6, param_7);
+            }
+            else
+            {
+                if (op == 2)
+                {
+                    res = vec4(localUV, 0.0, 0.0);
+                }
+                else
+                {
+                    if (op == 3)
+                    {
+                        res = vec4(_46.u_time);
+                    }
+                    else
+                    {
+                        if ((op >= 4) && (op <= 7))
+                        {
+                            res = _46.u_consts[i];
+                        }
+                        else
+                        {
+                            if (op == 8)
+                            {
+                                res = v_fragmentColor;
+                            }
+                            else
+                            {
+                                if (op == 9)
+                                {
+                                    int param_8 = i;
+                                    int param_9 = 0;
+                                    highp vec4 param_10 = vec4(0.0);
+                                    int param_11 = i;
+                                    int param_12 = 1;
+                                    highp vec4 param_13 = vec4(0.0);
+                                    res = readIn(param_8, param_9, param_10) + readIn(param_11, param_12, param_13);
+                                }
+                                else
+                                {
+                                    if (op == 10)
+                                    {
+                                        int param_14 = i;
+                                        int param_15 = 0;
+                                        highp vec4 param_16 = vec4(0.0);
+                                        int param_17 = i;
+                                        int param_18 = 1;
+                                        highp vec4 param_19 = vec4(0.0);
+                                        res = readIn(param_14, param_15, param_16) - readIn(param_17, param_18, param_19);
+                                    }
+                                    else
+                                    {
+                                        if (op == 11)
+                                        {
+                                            int param_20 = i;
+                                            int param_21 = 0;
+                                            highp vec4 param_22 = vec4(0.0);
+                                            int param_23 = i;
+                                            int param_24 = 1;
+                                            highp vec4 param_25 = vec4(0.0);
+                                            res = readIn(param_20, param_21, param_22) * readIn(param_23, param_24, param_25);
+                                        }
+                                        else
+                                        {
+                                            if (op == 12)
+                                            {
+                                                int param_26 = i;
+                                                int param_27 = 1;
+                                                highp vec4 param_28 = vec4(1.0);
+                                                highp vec4 d = readIn(param_26, param_27, param_28);
+                                                int param_29 = i;
+                                                int param_30 = 0;
+                                                highp vec4 param_31 = vec4(0.0);
+                                                res = readIn(param_29, param_30, param_31) / (d + vec4(9.9999997473787516355514526367188e-06));
+                                            }
+                                            else
+                                            {
+                                                if (op == 13)
+                                                {
+                                                    int param_32 = i;
+                                                    int param_33 = 0;
+                                                    highp vec4 param_34 = vec4(0.0);
+                                                    int param_35 = i;
+                                                    int param_36 = 1;
+                                                    highp vec4 param_37 = vec4(1.0);
+                                                    res = pow(max(readIn(param_32, param_33, param_34), vec4(0.0)), readIn(param_35, param_36, param_37));
+                                                }
+                                                else
+                                                {
+                                                    if (op == 14)
+                                                    {
+                                                        int param_38 = i;
+                                                        int param_39 = 0;
+                                                        highp vec4 param_40 = vec4(0.0);
+                                                        res = sqrt(max(readIn(param_38, param_39, param_40), vec4(0.0)));
+                                                    }
+                                                    else
+                                                    {
+                                                        if (op == 15)
+                                                        {
+                                                            int param_41 = i;
+                                                            int param_42 = 0;
+                                                            highp vec4 param_43 = vec4(0.0);
+                                                            res = abs(readIn(param_41, param_42, param_43));
+                                                        }
+                                                        else
+                                                        {
+                                                            if (op == 16)
+                                                            {
+                                                                int param_44 = i;
+                                                                int param_45 = 0;
+                                                                highp vec4 param_46 = vec4(0.0);
+                                                                res = sin(readIn(param_44, param_45, param_46));
+                                                            }
+                                                            else
+                                                            {
+                                                                if (op == 17)
+                                                                {
+                                                                    int param_47 = i;
+                                                                    int param_48 = 0;
+                                                                    highp vec4 param_49 = vec4(0.0);
+                                                                    res = cos(readIn(param_47, param_48, param_49));
+                                                                }
+                                                                else
+                                                                {
+                                                                    if (op == 18)
+                                                                    {
+                                                                        int param_50 = i;
+                                                                        int param_51 = 0;
+                                                                        highp vec4 param_52 = vec4(0.0);
+                                                                        res = fract(readIn(param_50, param_51, param_52));
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        if (op == 19)
+                                                                        {
+                                                                            int param_53 = i;
+                                                                            int param_54 = 0;
+                                                                            highp vec4 param_55 = vec4(0.0);
+                                                                            res = floor(readIn(param_53, param_54, param_55));
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            if (op == 20)
+                                                                            {
+                                                                                int param_56 = i;
+                                                                                int param_57 = 0;
+                                                                                highp vec4 param_58 = vec4(0.0);
+                                                                                res = ceil(readIn(param_56, param_57, param_58));
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                if (op == 21)
+                                                                                {
+                                                                                    int param_59 = i;
+                                                                                    int param_60 = 0;
+                                                                                    highp vec4 param_61 = vec4(0.0);
+                                                                                    res = clamp(readIn(param_59, param_60, param_61), vec4(0.0), vec4(1.0));
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    if (op == 22)
+                                                                                    {
+                                                                                        int param_62 = i;
+                                                                                        int param_63 = 0;
+                                                                                        highp vec4 param_64 = vec4(0.0);
+                                                                                        res = vec4(1.0) - readIn(param_62, param_63, param_64);
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        if (op == 23)
+                                                                                        {
+                                                                                            int param_65 = i;
+                                                                                            int param_66 = 0;
+                                                                                            highp vec4 param_67 = vec4(0.0);
+                                                                                            int param_68 = i;
+                                                                                            int param_69 = 1;
+                                                                                            highp vec4 param_70 = vec4(0.0);
+                                                                                            int param_71 = i;
+                                                                                            int param_72 = 2;
+                                                                                            highp vec4 param_73 = vec4(1.0);
+                                                                                            res = clamp(readIn(param_65, param_66, param_67), readIn(param_68, param_69, param_70), readIn(param_71, param_72, param_73));
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            if (op == 24)
+                                                                                            {
+                                                                                                int param_74 = i;
+                                                                                                int param_75 = 0;
+                                                                                                highp vec4 param_76 = vec4(0.0);
+                                                                                                int param_77 = i;
+                                                                                                int param_78 = 1;
+                                                                                                highp vec4 param_79 = vec4(1.0);
+                                                                                                int param_80 = i;
+                                                                                                int param_81 = 2;
+                                                                                                highp vec4 param_82 = vec4(0.5);
+                                                                                                res = mix(readIn(param_74, param_75, param_76), readIn(param_77, param_78, param_79), readIn(param_80, param_81, param_82));
+                                                                                            }
+                                                                                            else
+                                                                                            {
+                                                                                                if (op == 25)
+                                                                                                {
+                                                                                                    int param_83 = i;
+                                                                                                    int param_84 = 0;
+                                                                                                    highp vec4 param_85 = vec4(0.5);
+                                                                                                    int param_86 = i;
+                                                                                                    int param_87 = 1;
+                                                                                                    highp vec4 param_88 = vec4(0.0);
+                                                                                                    res = step(readIn(param_83, param_84, param_85), readIn(param_86, param_87, param_88));
+                                                                                                }
+                                                                                                else
+                                                                                                {
+                                                                                                    if (op == 26)
+                                                                                                    {
+                                                                                                        int param_89 = i;
+                                                                                                        int param_90 = 0;
+                                                                                                        highp vec4 param_91 = vec4(0.0);
+                                                                                                        int param_92 = i;
+                                                                                                        int param_93 = 1;
+                                                                                                        highp vec4 param_94 = vec4(1.0);
+                                                                                                        int param_95 = i;
+                                                                                                        int param_96 = 2;
+                                                                                                        highp vec4 param_97 = vec4(0.5);
+                                                                                                        res = smoothstep(readIn(param_89, param_90, param_91), readIn(param_92, param_93, param_94), readIn(param_95, param_96, param_97));
+                                                                                                    }
+                                                                                                    else
+                                                                                                    {
+                                                                                                        if (op == 27)
+                                                                                                        {
+                                                                                                            int param_98 = i;
+                                                                                                            int param_99 = 0;
+                                                                                                            highp vec4 param_100 = vec4(0.0);
+                                                                                                            highp vec4 in0 = readIn(param_98, param_99, param_100);
+                                                                                                            int param_101 = i;
+                                                                                                            int param_102 = 1;
+                                                                                                            highp vec4 param_103 = vec4(0.0);
+                                                                                                            highp vec4 in1 = readIn(param_101, param_102, param_103);
+                                                                                                            int param_104 = i;
+                                                                                                            int param_105 = 2;
+                                                                                                            highp vec4 param_106 = vec4(1.0);
+                                                                                                            highp vec4 in2 = readIn(param_104, param_105, param_106);
+                                                                                                            int param_107 = i;
+                                                                                                            int param_108 = 3;
+                                                                                                            highp vec4 param_109 = vec4(0.0);
+                                                                                                            highp vec4 in3 = readIn(param_107, param_108, param_109);
+                                                                                                            int param_110 = i;
+                                                                                                            int param_111 = 4;
+                                                                                                            highp vec4 param_112 = vec4(1.0);
+                                                                                                            highp vec4 in4 = readIn(param_110, param_111, param_112);
+                                                                                                            res = in3 + (((in0 - in1) / ((in2 - in1) + vec4(9.9999997473787516355514526367188e-06))) * (in4 - in3));
+                                                                                                        }
+                                                                                                        else
+                                                                                                        {
+                                                                                                            if (op == 28)
+                                                                                                            {
+                                                                                                                int param_113 = i;
+                                                                                                                int param_114 = 0;
+                                                                                                                highp vec4 param_115 = vec4(0.0);
+                                                                                                                res = readIn(param_113, param_114, param_115);
+                                                                                                            }
+                                                                                                            else
+                                                                                                            {
+                                                                                                                if (op == 29)
+                                                                                                                {
+                                                                                                                    int param_116 = i;
+                                                                                                                    int param_117 = 0;
+                                                                                                                    highp vec4 param_118 = vec4(0.0);
+                                                                                                                    int param_119 = i;
+                                                                                                                    int param_120 = 1;
+                                                                                                                    highp vec4 param_121 = vec4(0.0);
+                                                                                                                    int param_122 = i;
+                                                                                                                    int param_123 = 2;
+                                                                                                                    highp vec4 param_124 = vec4(0.0);
+                                                                                                                    int param_125 = i;
+                                                                                                                    int param_126 = 3;
+                                                                                                                    highp vec4 param_127 = vec4(1.0);
+                                                                                                                    res = vec4(readIn(param_116, param_117, param_118).x, readIn(param_119, param_120, param_121).x, readIn(param_122, param_123, param_124).x, readIn(param_125, param_126, param_127).x);
+                                                                                                                }
+                                                                                                                else
+                                                                                                                {
+                                                                                                                    if (op == 30)
+                                                                                                                    {
+                                                                                                                        int param_128 = i;
+                                                                                                                        int param_129 = 0;
+                                                                                                                        highp vec4 param_130 = vec4(0.001000000047497451305389404296875);
+                                                                                                                        res = normalize(readIn(param_128, param_129, param_130));
+                                                                                                                    }
+                                                                                                                    else
+                                                                                                                    {
+                                                                                                                        if (op == 31)
+                                                                                                                        {
+                                                                                                                            int param_131 = i;
+                                                                                                                            int param_132 = 0;
+                                                                                                                            highp vec4 param_133 = vec4(0.0);
+                                                                                                                            int param_134 = i;
+                                                                                                                            int param_135 = 1;
+                                                                                                                            highp vec4 param_136 = vec4(0.0);
+                                                                                                                            res = vec4(dot(readIn(param_131, param_132, param_133), readIn(param_134, param_135, param_136)));
+                                                                                                                        }
+                                                                                                                        else
+                                                                                                                        {
+                                                                                                                            if (op == 32)
+                                                                                                                            {
+                                                                                                                                int param_137 = i;
+                                                                                                                                int param_138 = 0;
+                                                                                                                                highp vec4 param_139 = vec4(0.0);
+                                                                                                                                res = vec4(length(readIn(param_137, param_138, param_139)));
+                                                                                                                            }
+                                                                                                                            else
+                                                                                                                            {
+                                                                                                                                if (op == 33)
+                                                                                                                                {
+                                                                                                                                    res = vec4(1.0 - abs(dot(normalize(vec3((localUV * 2.0) - vec2(1.0), 1.0)), vec3(0.0, 0.0, 1.0))));
+                                                                                                                                }
+                                                                                                                                else
+                                                                                                                                {
+                                                                                                                                    if (op == 34)
+                                                                                                                                    {
+                                                                                                                                        int param_140 = i;
+                                                                                                                                        int param_141 = 0;
+                                                                                                                                        highp vec4 param_142 = vec4(localUV, 0.0, 0.0);
+                                                                                                                                        int param_143 = i;
+                                                                                                                                        int param_144 = 1;
+                                                                                                                                        highp vec4 param_145 = vec4(1.0, 0.0, 0.0, 0.0);
+                                                                                                                                        res = vec4(readIn(param_140, param_141, param_142).xy + (readIn(param_143, param_144, param_145).xy * _46.u_time), 0.0, 0.0);
+                                                                                                                                    }
+                                                                                                                                    else
+                                                                                                                                    {
+                                                                                                                                        if (op == 35)
+                                                                                                                                        {
+                                                                                                                                            int param_146 = i;
+                                                                                                                                            int param_147 = 0;
+                                                                                                                                            highp vec4 param_148 = vec4(localUV, 0.0, 0.0);
+                                                                                                                                            int param_149 = i;
+                                                                                                                                            int param_150 = 1;
+                                                                                                                                            highp vec4 param_151 = vec4(1.0, 1.0, 0.0, 0.0);
+                                                                                                                                            res = vec4(fract(readIn(param_146, param_147, param_148).xy * readIn(param_149, param_150, param_151).xy), 0.0, 0.0);
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        outVals[i] = res * _46.u_outMasks[i];
+    }
+    if (_46.u_outputType == 1)
+    {
+        finalColor = vec4(finalColor.xxx, 1.0);
+    }
+    else
+    {
+        if (_46.u_outputType == 2)
+        {
+            finalColor = vec4(finalColor.xy, 0.0, 1.0);
+        }
+        else
+        {
+            if (_46.u_outputType == 3)
+            {
+                finalColor = vec4(finalColor.xyz, 1.0);
+            }
+        }
+    }
+    FragColor = v_fragmentColor * finalColor;
+}
+
+#version 300 es
+
+layout(std140) uniform VSGlobalData
+{
+    mat4 u_MVPMatrix;
+} _21;
+
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 1) in vec2 a_texCoord;
+out vec4 v_fragmentColor;
+layout(location = 2) in vec4 a_color;
+
+void main()
+{
+    gl_Position = _21.u_MVPMatrix * a_position;
+    v_texCoord = a_texCoord;
+    v_fragmentColor = a_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform PaletteData
+{
+    highp vec4 u_paletteInfo;
+    highp vec4 u_blendInfo;
+    highp vec4 u_clipInfo;
+} _22;
+
+uniform highp sampler2D u_tex0;
+uniform highp sampler2D u_palette;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_fragmentColor;
+
+void main()
+{
+    highp float barX = (v_texCoord.x - _22.u_clipInfo.x) / max(_22.u_clipInfo.y - _22.u_clipInfo.x, 9.9999999747524270787835121154785e-07);
+    bool _43 = _22.u_clipInfo.z < 0.999998986721038818359375;
+    bool _75;
+    if (_43)
+    {
+        bool _49 = _22.u_clipInfo.z <= 0.0;
+        bool _74;
+        if (!_49)
+        {
+            bool _59;
+            if (_22.u_clipInfo.w > 0.5)
+            {
+                _59 = barX < (1.0 - _22.u_clipInfo.z);
+            }
+            else
+            {
+                _59 = barX > _22.u_clipInfo.z;
+            }
+            _74 = _59;
+        }
+        else
+        {
+            _74 = _49;
+        }
+        _75 = _74;
+    }
+    else
+    {
+        _75 = _43;
+    }
+    if (_75)
+    {
+        discard;
+    }
+    highp vec4 color = texture(u_tex0, v_texCoord);
+    if (_22.u_paletteInfo.y < 0.5)
+    {
+        highp float index = floor((color.x * 255.0) + 0.5);
+        color = texture(u_palette, vec2((index + 0.5) / 256.0, _22.u_paletteInfo.x));
+        bool _112 = index < 0.5;
+        bool _118;
+        if (_112)
+        {
+            _118 = _22.u_paletteInfo.z < 0.5;
+        }
+        else
+        {
+            _118 = _112;
+        }
+        if (_118)
+        {
+            color.w = 1.0;
+        }
+    }
+    if (_22.u_paletteInfo.y < 1.5)
+    {
+        highp float _129 = color.w;
+        highp vec4 _131 = color;
+        highp vec3 _133 = _131.xyz * _129;
+        color.x = _133.x;
+        color.y = _133.y;
+        color.z = _133.z;
+    }
+    FragColor = vec4((color.xyz * v_fragmentColor.xyz) * _22.u_blendInfo.x, (color.w * v_fragmentColor.w) * (1.0 - _22.u_blendInfo.y));
+}
+
+#version 300 es
+
+layout(std140) uniform VSGlobalData
+{
+    mat4 u_MVPMatrix;
+} _21;
+
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 1) in vec2 a_texCoord;
+out vec4 v_fragmentColor;
+layout(location = 2) in vec4 a_color;
+
+void main()
+{
+    gl_Position = _21.u_MVPMatrix * a_position;
+    v_texCoord = a_texCoord;
+    v_fragmentColor = a_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform highp sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_fragmentColor;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = v_fragmentColor * texture(u_tex0, v_texCoord).w;
+}
+
+#version 300 es
+
+layout(std140) uniform VSGlobalData
+{
+    mat4 u_MVPMatrix;
+} _21;
+
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 1) in vec2 a_texCoord;
+out vec4 v_fragmentColor;
+layout(location = 2) in vec4 a_color;
+
+void main()
+{
+    gl_Position = _21.u_MVPMatrix * a_position;
+    v_texCoord = a_texCoord;
+    v_fragmentColor = a_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform GridData
+{
+    highp vec4 u_gridCamera;
+} _59;
+
+in highp vec2 v_gridPosition;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_fragmentColor;
+
+highp float lines(highp vec2 position, highp float spacing)
+{
+    highp vec2 cells = position / vec2(spacing);
+    highp vec2 width = max(fwidth(cells), vec2(9.9999997473787516355514526367188e-06));
+    highp vec2 distanceToLine = abs(fract(cells - vec2(0.5)) - vec2(0.5)) / width;
+    return 1.0 - clamp(min(distanceToLine.x, distanceToLine.y), 0.0, 1.0);
+}
+
+void main()
+{
+    highp vec2 param = v_gridPosition;
+    highp float param_1 = _59.u_gridCamera.w;
+    highp float minor = lines(param, param_1);
+    highp vec2 param_2 = v_gridPosition;
+    highp float param_3 = _59.u_gridCamera.w * 10.0;
+    highp float major = lines(param_2, param_3);
+    highp vec2 width = max(fwidth(v_gridPosition), vec2(9.9999997473787516355514526367188e-06));
+    highp float xAxis = 1.0 - clamp(abs(v_gridPosition.y) / width.y, 0.0, 1.0);
+    highp float zAxis = 1.0 - clamp(abs(v_gridPosition.x) / width.x, 0.0, 1.0);
+    highp vec3 color = mix(vec3(0.2800000011920928955078125), vec3(0.449999988079071044921875), vec3(major));
+    color = mix(color, vec3(0.7200000286102294921875, 0.20000000298023223876953125, 0.20000000298023223876953125), vec3(xAxis));
+    color = mix(color, vec3(0.20000000298023223876953125, 0.62000000476837158203125, 0.319999992847442626953125), vec3(zAxis));
+    highp float distanceToCamera = length(v_gridPosition - _59.u_gridCamera.xz);
+    highp float fadeDistance = max(abs(_59.u_gridCamera.y) * 60.0, _59.u_gridCamera.w * 500.0);
+    highp float alpha = max(max(minor * 0.4000000059604644775390625, major * 0.64999997615814208984375), max(xAxis, zAxis) * 0.85000002384185791015625);
+    alpha *= (1.0 - smoothstep(fadeDistance * 0.300000011920928955078125, fadeDistance, distanceToCamera));
+    if (alpha < 0.004999999888241291046142578125)
+    {
+        discard;
+    }
+    FragColor = vec4(color * alpha, alpha) * v_fragmentColor;
+}
+
+#version 300 es
+
+layout(std140) uniform VSGlobalData
+{
+    mat4 u_MVPMatrix;
+} _21;
+
+layout(location = 0) in vec4 a_position;
+out vec4 v_fragmentColor;
+layout(location = 1) in vec4 a_color;
+out vec2 v_gridPosition;
+
+void main()
+{
+    gl_Position = _21.u_MVPMatrix * a_position;
+    v_fragmentColor = a_color;
+    v_gridPosition = a_position.xz;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _29;
+
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+layout(location = 0) in vec2 a_position;
+
+void main()
+{
+    v_texCoord = a_texCoord;
+    v_color = a_color;
+    gl_Position = _29.u_MVPMatrix * vec4(a_position, 0.0, 1.0);
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    float u_flipY;
+} _30;
+
+out vec2 v_uv;
+layout(location = 0) in vec2 a_position;
+
+void main()
+{
+    v_uv = (a_position * 0.5) + vec2(0.5);
+    v_uv.y = mix(v_uv.y, 1.0 - v_uv.y, _30.u_flipY);
+    gl_Position = vec4(a_position, 0.0, 1.0);
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_model;
+    mat4 u_view;
+    mat4 u_viewProjection;
+    mat3 u_normalMatrix;
+} _31;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+out float v_depth;
+out vec3 v_normal;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+out vec2 v_uv;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    vec4 p = vec4(a_position, 1.0);
+    vec3 n = a_normal;
+    vec4 world = _31.u_model * p;
+    v_depth = -(_31.u_view * world).z;
+    v_normal = _31.u_normalMatrix * n;
+    v_color = a_color;
+    v_uv = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    gl_Position = _31.u_viewProjection * world;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+    highp vec4 u_material;
+    highp vec4 u_camera;
+} _105;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_uv;
+in highp vec4 v_color;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec3 v_normal;
+in highp float v_depth;
+
+highp vec2 octEncode(inout highp vec3 n)
+{
+    n /= vec3(max((abs(n.x) + abs(n.y)) + abs(n.z), 9.9999997473787516355514526367188e-05));
+    if (n.z < 0.0)
+    {
+        highp vec3 _67 = n;
+        highp vec3 _72 = n;
+        highp vec2 _78 = (vec2(1.0) - abs(_67.yx)) * sign(_72.xy + vec2(9.9999997473787516355514526367188e-06));
+        n.x = _78.x;
+        n.y = _78.y;
+    }
+    return (n.xy * 0.5) + vec2(0.5);
+}
+
+highp vec3 packDepth(highp float depth)
+{
+    highp vec3 result = fract(vec3(1.0, 255.0, 65025.0) * clamp(depth, 0.0, 0.999998986721038818359375));
+    return result - (result.yzz * vec3(0.0039215688593685626983642578125, 0.0039215688593685626983642578125, 0.0));
+}
+
+void main()
+{
+    highp vec4 albedo = (texture(u_tex0, v_uv) * _105.u_color) * v_color;
+    if (albedo.w < _105.u_material.w)
+    {
+        discard;
+    }
+    if (_105.u_material.x < 0.5)
+    {
+        FragColor = albedo;
+    }
+    else
+    {
+        if (_105.u_material.x < 1.5)
+        {
+            highp vec3 param = normalize(v_normal);
+            highp vec2 _147 = octEncode(param);
+            FragColor = vec4(_147, _105.u_material.yz);
+        }
+        else
+        {
+            if (_105.u_material.x < 2.5)
+            {
+                highp float param_1 = log2(1.0 + max(v_depth, 0.0)) / log2(1.0 + _105.u_camera.y);
+                FragColor = vec4(packDepth(param_1), 1.0);
+            }
+            else
+            {
+                highp float param_2 = gl_FragCoord.z;
+                FragColor = vec4(packDepth(param_2), 1.0);
+            }
+        }
+    }
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_model;
+    mat4 u_view;
+    mat4 u_viewProjection;
+    mat3 u_normalMatrix;
+    vec4 u_vertexColor;
+} _31;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+out float v_depth;
+out vec3 v_normal;
+out vec4 v_color;
+out vec2 v_uv;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    vec4 p = vec4(a_position, 1.0);
+    vec3 n = a_normal;
+    vec4 world = _31.u_model * p;
+    v_depth = -(_31.u_view * world).z;
+    v_normal = _31.u_normalMatrix * n;
+    v_color = _31.u_vertexColor;
+    v_uv = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    gl_Position = _31.u_viewProjection * world;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp mat4 u_inverseProjection;
+    highp mat4 u_projection;
+    highp mat4 u_view;
+    highp mat4 u_inverseView;
+    highp mat4 u_lightMatrix;
+    highp vec4 u_camera;
+    highp vec4 u_resolution;
+    highp vec4 u_options;
+    highp vec4 u_lightDirection;
+    highp vec3 u_lightColor;
+} _131;
+
+uniform mediump sampler2D u_depth;
+uniform mediump sampler2D u_shadow;
+uniform mediump sampler2D u_albedo;
+uniform mediump sampler2D u_normal;
+
+in highp vec2 v_uv;
+layout(location = 0) out highp vec4 FragColor;
+
+highp vec3 octDecode(highp vec2 encoded)
+{
+    highp vec2 p = (encoded * 2.0) - vec2(1.0);
+    highp vec3 n = vec3(p, (1.0 - abs(p.x)) - abs(p.y));
+    highp float t = clamp(-n.z, 0.0, 1.0);
+    highp float _86;
+    if (n.x >= 0.0)
+    {
+        _86 = -t;
+    }
+    else
+    {
+        _86 = t;
+    }
+    highp float _97;
+    if (n.y >= 0.0)
+    {
+        _97 = -t;
+    }
+    else
+    {
+        _97 = t;
+    }
+    highp vec3 _106 = n;
+    highp vec2 _108 = _106.xy + vec2(_86, _97);
+    n.x = _108.x;
+    n.y = _108.y;
+    return normalize(n);
+}
+
+highp float unpackDepth(highp vec3 depth)
+{
+    return dot(depth, vec3(1.0, 0.0039215688593685626983642578125, 1.5378700481960549950599670410156e-05));
+}
+
+highp vec3 viewPosition(highp vec2 uv)
+{
+    highp vec3 param = texture(u_depth, uv).xyz;
+    highp float depth = exp2(unpackDepth(param) * log2(1.0 + _131.u_camera.y)) - 1.0;
+    highp vec2 clip = (uv * 2.0) - vec2(1.0);
+    clip.y *= (1.0 - (2.0 * _131.u_camera.z));
+    highp vec4 ray = _131.u_inverseProjection * vec4(clip, 1.0, 1.0);
+    return ray.xyz * (depth / max(-ray.z, 9.9999999747524270787835121154785e-07));
+}
+
+highp float shadowFactor(highp vec3 world, highp vec3 n)
+{
+    highp vec4 projected = _131.u_lightMatrix * vec4(world + ((n * _131.u_resolution.z) * 0.0005000000237487256526947021484375), 1.0);
+    highp vec3 q = projected.xyz / vec3(projected.w);
+    highp vec2 uv = (q.xy * 0.5) + vec2(0.5);
+    uv.y = mix(uv.y, 1.0 - uv.y, _131.u_camera.z);
+    highp float depth = mix((q.z * 0.5) + 0.5, q.z, _131.u_camera.z);
+    bool _401 = min(uv.x, uv.y) < 0.0;
+    bool _411;
+    if (!_401)
+    {
+        _411 = max(uv.x, uv.y) > 1.0;
+    }
+    else
+    {
+        _411 = _401;
+    }
+    if ((_411 || (depth < 0.0)) || (depth > 1.0))
+    {
+        return 1.0;
+    }
+    highp float result = 0.0;
+    highp float bias = max(0.0003000000142492353916168212890625, (1.0 - dot(n, _131.u_lightDirection.xyz)) * 0.001000000047497451305389404296875);
+    highp float _467;
+    for (mediump int x = -1; x <= 1; x++)
+    {
+        for (mediump int y = -1; y <= 1; y++)
+        {
+            highp vec4 sampleDepth = texture(u_shadow, uv + (vec2(float(x), float(y)) / vec2(1024.0)));
+            if (sampleDepth.w < 0.5)
+            {
+                _467 = 1.0;
+            }
+            else
+            {
+                highp vec3 param = sampleDepth.xyz;
+                _467 = step(depth - bias, unpackDepth(param));
+            }
+            result += _467;
+        }
+    }
+    return result / 9.0;
+}
+
+highp float ambientOcclusion(highp vec3 p, highp vec3 n)
+{
+    highp float result = 0.0;
+    highp float weight = 0.0;
+    highp float radius = max(0.0500000007450580596923828125, abs(p.z) * 0.0350000001490116119384765625);
+    highp vec2 scale = _131.u_resolution.xy * clamp((radius * 500.0) / max(abs(p.z), 0.00999999977648258209228515625), 2.0, 40.0);
+    highp float angle = fract(dot(floor(v_uv / _131.u_resolution.xy), vec2(0.067110560834407806396484375, 0.005837149918079376220703125))) * 6.283185482025146484375;
+    for (mediump int i = 0; i < 12; i++)
+    {
+        highp float a = angle + (float(i) * 2.399962902069091796875);
+        highp vec2 uv = v_uv + ((vec2(cos(a), sin(a)) * scale) * sqrt((float(i) + 0.5) / 12.0));
+        highp vec4 sampleDepth = texture(u_depth, uv);
+        highp vec2 param = uv;
+        highp vec3 delta = viewPosition(param) - p;
+        highp float distanceToSample = length(delta);
+        highp float valid = (sampleDepth.w * step(distanceToSample, radius)) * step(0.001000000047497451305389404296875, distanceToSample);
+        result += (max(dot(n, delta / vec3(max(distanceToSample, 0.001000000047497451305389404296875))) - 0.119999997317790985107421875, 0.0) * valid);
+        weight += valid;
+    }
+    return clamp(1.0 - ((result / max(weight, 1.0)) * 1.7999999523162841796875), 0.20000000298023223876953125, 1.0);
+}
+
+highp vec3 screenReflection(highp vec3 p, highp vec3 direction, highp float roughness)
+{
+    highp vec3 samplePosition = p;
+    highp float stepLength = max(0.0199999995529651641845703125, abs(p.z) * 0.02500000037252902984619140625);
+    for (mediump int i = 0; i < 16; i++)
+    {
+        samplePosition += (direction * stepLength);
+        stepLength *= 1.12000000476837158203125;
+        highp vec4 projected = _131.u_projection * vec4(samplePosition, 1.0);
+        highp vec2 uv = ((projected.xy / vec2(projected.w)) * 0.5) + vec2(0.5);
+        uv.y = mix(uv.y, 1.0 - uv.y, _131.u_camera.z);
+        bool _551 = min(uv.x, uv.y) < 0.0199999995529651641845703125;
+        bool _562;
+        if (!_551)
+        {
+            _562 = max(uv.x, uv.y) > 0.980000019073486328125;
+        }
+        else
+        {
+            _562 = _551;
+        }
+        bool _572;
+        if (!_562)
+        {
+            _572 = samplePosition.z >= (-_131.u_camera.x);
+        }
+        else
+        {
+            _572 = _562;
+        }
+        if (_572)
+        {
+            break;
+        }
+        highp vec2 param = uv;
+        highp float sceneZ = viewPosition(param).z;
+        highp float crossing = sceneZ - samplePosition.z;
+        vec4 _588 = texture(u_depth, uv);
+        bool _593 = (_588.w > 0.5) && (crossing > 0.0);
+        bool _601;
+        if (_593)
+        {
+            _601 = crossing < (stepLength * 1.5);
+        }
+        else
+        {
+            _601 = _593;
+        }
+        if (_601)
+        {
+            highp float fade = smoothstep(0.0, 0.1500000059604644775390625, min(min(uv.x, uv.y), min(1.0 - uv.x, 1.0 - uv.y)));
+            return ((pow(texture(u_albedo, uv).xyz, vec3(2.2000000476837158203125)) * fade) * (1.0 - roughness)) * 0.5;
+        }
+    }
+    return vec3(0.0);
+}
+
+highp vec4 rgbm(inout highp vec3 color)
+{
+    color = max(color, vec3(0.0)) / vec3(16.0);
+    highp float m = ceil(clamp(max(max(color.x, color.y), color.z), 0.0039215688593685626983642578125, 1.0) * 255.0) / 255.0;
+    return vec4(clamp(color / vec3(m), vec3(0.0), vec3(1.0)), m);
+}
+
+void main()
+{
+    highp vec4 depth = texture(u_depth, v_uv);
+    if (depth.w < 0.5)
+    {
+        FragColor = vec4(0.0);
+        return;
+    }
+    highp vec4 material = texture(u_normal, v_uv);
+    highp vec2 param = material.xy;
+    highp vec3 n = octDecode(param);
+    highp vec2 param_1 = v_uv;
+    highp vec3 p = viewPosition(param_1);
+    highp vec3 world = (_131.u_inverseView * vec4(p, 1.0)).xyz;
+    highp vec3 camera = (_131.u_inverseView * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+    highp vec3 v = normalize(camera - world);
+    highp vec3 l = normalize(_131.u_lightDirection.xyz);
+    highp vec3 h = normalize(v + l);
+    highp vec3 albedo = pow(texture(u_albedo, v_uv).xyz, vec3(2.2000000476837158203125));
+    highp float roughness = clamp(material.z, 0.07999999821186065673828125, 1.0);
+    highp float metallic = material.w;
+    highp float nv = max(dot(n, v), 0.001000000047497451305389404296875);
+    highp float nl = max(dot(n, l), 0.0);
+    highp float nh = max(dot(n, h), 0.0);
+    highp float vh = max(dot(v, h), 0.0);
+    highp float a = roughness * roughness;
+    highp float a2 = a * a;
+    highp float denominator = ((nh * nh) * (a2 - 1.0)) + 1.0;
+    highp float distribution = a2 / (((3.1415927410125732421875 * denominator) * denominator) + 9.9999997473787516355514526367188e-06);
+    highp float k = ((roughness + 1.0) * (roughness + 1.0)) / 8.0;
+    highp float geometry = ((nv / ((nv * (1.0 - k)) + k)) * nl) / ((nl * (1.0 - k)) + k);
+    highp vec3 f0 = mix(vec3(0.039999999105930328369140625), albedo, vec3(metallic));
+    highp vec3 fresnel = f0 + ((vec3(1.0) - f0) * pow(1.0 - vh, 5.0));
+    highp vec3 specular = (fresnel * (distribution * geometry)) / vec3(max((4.0 * nv) * nl, 0.001000000047497451305389404296875));
+    highp vec3 diffuse = (((vec3(1.0) - fresnel) * (1.0 - metallic)) * albedo) / vec3(3.1415927410125732421875);
+    highp float _832;
+    if (_131.u_options.y > 0.5)
+    {
+        highp vec3 param_2 = world;
+        highp vec3 param_3 = n;
+        _832 = shadowFactor(param_2, param_3);
+    }
+    else
+    {
+        _832 = 1.0;
+    }
+    highp float shadow = _832;
+    highp vec3 viewNormal = normalize(mat3(_131.u_view[0].xyz, _131.u_view[1].xyz, _131.u_view[2].xyz) * n);
+    highp float _861;
+    if (_131.u_options.x > 0.5)
+    {
+        highp vec3 param_4 = p;
+        highp vec3 param_5 = viewNormal;
+        _861 = ambientOcclusion(param_4, param_5);
+    }
+    else
+    {
+        _861 = 1.0;
+    }
+    highp float ao = _861;
+    highp vec3 result = ((((diffuse + specular) * _131.u_lightColor) * _131.u_lightDirection.w) * nl) * shadow;
+    result += ((albedo * _131.u_options.w) * ao);
+    if (_131.u_options.z > 0.5)
+    {
+        highp vec3 param_6 = p;
+        highp vec3 param_7 = reflect(normalize(p), viewNormal);
+        highp float param_8 = roughness;
+        result += (screenReflection(param_6, param_7, param_8) * fresnel);
+    }
+    highp vec3 param_9 = result;
+    highp vec4 _916 = rgbm(param_9);
+    FragColor = _916;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_post;
+    highp vec2 u_direction;
+} _104;
+
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_bloom;
+uniform mediump sampler2D u_depth;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec2 v_uv;
+
+highp vec3 decode(highp vec4 color)
+{
+    return (color.xyz * color.w) * 16.0;
+}
+
+highp vec4 encode(inout highp vec3 color)
+{
+    color = max(color, vec3(0.0)) / vec3(16.0);
+    highp float m = ceil(clamp(max(max(color.x, color.y), color.z), 0.0039215688593685626983642578125, 1.0) * 255.0) / 255.0;
+    return vec4(clamp(color / vec3(m), vec3(0.0), vec3(1.0)), m);
+}
+
+highp vec3 aces(highp vec3 value)
+{
+    return clamp((value * ((value * 2.5099999904632568359375) + vec3(0.02999999932944774627685546875))) / ((value * ((value * 2.4300000667572021484375) + vec3(0.589999973773956298828125))) + vec3(0.14000000059604644775390625)), vec3(0.0), vec3(1.0));
+}
+
+void main()
+{
+    if (_104.u_post.x > 4.5)
+    {
+        FragColor = texture(u_tex0, v_uv);
+        return;
+    }
+    highp vec4 param = texture(u_tex0, v_uv);
+    highp vec3 color = decode(param);
+    if (_104.u_post.x < 0.5)
+    {
+        highp float brightness = max(max(color.x, color.y), color.z);
+        highp vec3 param_1 = (color * max(brightness - 1.0, 0.0)) / vec3(max(brightness, 0.001000000047497451305389404296875));
+        highp vec4 _159 = encode(param_1);
+        FragColor = _159;
+    }
+    else
+    {
+        if (_104.u_post.x < 1.5)
+        {
+            highp vec3 result = color * 0.227026998996734619140625;
+            highp vec4 param_2 = texture(u_tex0, v_uv + (_104.u_direction * 1.3846149444580078125));
+            result += (decode(param_2) * 0.316215991973876953125);
+            highp vec4 param_3 = texture(u_tex0, v_uv - (_104.u_direction * 1.3846149444580078125));
+            result += (decode(param_3) * 0.316215991973876953125);
+            highp vec4 param_4 = texture(u_tex0, v_uv + (_104.u_direction * 3.2307689189910888671875));
+            result += (decode(param_4) * 0.070270001888275146484375);
+            highp vec4 param_5 = texture(u_tex0, v_uv - (_104.u_direction * 3.2307689189910888671875));
+            result += (decode(param_5) * 0.070270001888275146484375);
+            highp vec3 param_6 = result;
+            highp vec4 _227 = encode(param_6);
+            FragColor = _227;
+        }
+        else
+        {
+            highp vec4 param_7 = texture(u_bloom, v_uv);
+            color += (decode(param_7) * _104.u_post.z);
+            highp vec3 param_8 = color * _104.u_post.y;
+            FragColor = vec4(pow(aces(param_8), vec3(0.4545454680919647216796875)), texture(u_depth, v_uv).w);
+        }
+    }
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_model;
+    mat4 u_view;
+    mat4 u_viewProjection;
+    mat3 u_normalMatrix;
+    vec4 u_matrixPalette[180];
+} _61;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+layout(location = 11) in vec4 a_blendIndex;
+layout(location = 12) in vec4 a_blendWeight;
+out float v_depth;
+out vec3 v_normal;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+out vec2 v_uv;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    vec4 p = vec4(a_position, 1.0);
+    vec3 n = a_normal;
+    vec4 row0 = vec4(0.0);
+    vec4 row1 = vec4(0.0);
+    vec4 row2 = vec4(0.0);
+    for (int i = 0; i < 4; i++)
+    {
+        int j = int(a_blendIndex[i]) * 3;
+        row0 += (_61.u_matrixPalette[j] * a_blendWeight[i]);
+        row1 += (_61.u_matrixPalette[j + 1] * a_blendWeight[i]);
+        row2 += (_61.u_matrixPalette[j + 2] * a_blendWeight[i]);
+    }
+    vec4 source = p;
+    vec3 _108 = vec3(dot(source, row0), dot(source, row1), dot(source, row2));
+    p.x = _108.x;
+    p.y = _108.y;
+    p.z = _108.z;
+    vec3 c0 = vec3(row0.x, row1.x, row2.x);
+    vec3 c1 = vec3(row0.y, row1.y, row2.y);
+    vec3 c2 = vec3(row0.z, row1.z, row2.z);
+    vec3 n0 = cross(c1, c2);
+    vec3 n1 = cross(c2, c0);
+    vec3 n2 = cross(c0, c1);
+    float determinant = dot(c0, n0);
+    vec3 _163;
+    if (abs(determinant) > 9.9999999747524270787835121154785e-07)
+    {
+        _163 = (mat3(vec3(n0), vec3(n1), vec3(n2)) * n) / vec3(determinant);
+    }
+    else
+    {
+        _163 = vec3(dot(row0.xyz, n), dot(row1.xyz, n), dot(row2.xyz, n));
+    }
+    n = _163;
+    vec4 world = _61.u_model * p;
+    v_depth = -(_61.u_view * world).z;
+    v_normal = _61.u_normalMatrix * n;
+    v_color = a_color;
+    v_uv = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    gl_Position = _61.u_viewProjection * world;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_model;
+    mat4 u_view;
+    mat4 u_viewProjection;
+    mat3 u_normalMatrix;
+    vec4 u_vertexColor;
+    vec4 u_matrixPalette[180];
+} _61;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+layout(location = 11) in vec4 a_blendIndex;
+layout(location = 12) in vec4 a_blendWeight;
+out float v_depth;
+out vec3 v_normal;
+out vec4 v_color;
+out vec2 v_uv;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    vec4 p = vec4(a_position, 1.0);
+    vec3 n = a_normal;
+    vec4 row0 = vec4(0.0);
+    vec4 row1 = vec4(0.0);
+    vec4 row2 = vec4(0.0);
+    for (int i = 0; i < 4; i++)
+    {
+        int j = int(a_blendIndex[i]) * 3;
+        row0 += (_61.u_matrixPalette[j] * a_blendWeight[i]);
+        row1 += (_61.u_matrixPalette[j + 1] * a_blendWeight[i]);
+        row2 += (_61.u_matrixPalette[j + 2] * a_blendWeight[i]);
+    }
+    vec4 source = p;
+    vec3 _109 = vec3(dot(source, row0), dot(source, row1), dot(source, row2));
+    p.x = _109.x;
+    p.y = _109.y;
+    p.z = _109.z;
+    vec3 c0 = vec3(row0.x, row1.x, row2.x);
+    vec3 c1 = vec3(row0.y, row1.y, row2.y);
+    vec3 c2 = vec3(row0.z, row1.z, row2.z);
+    vec3 n0 = cross(c1, c2);
+    vec3 n1 = cross(c2, c0);
+    vec3 n2 = cross(c0, c1);
+    float determinant = dot(c0, n0);
+    vec3 _164;
+    if (abs(determinant) > 9.9999999747524270787835121154785e-07)
+    {
+        _164 = (mat3(vec3(n0), vec3(n1), vec3(n2)) * n) / vec3(determinant);
+    }
+    else
+    {
+        _164 = vec3(dot(row0.xyz, n), dot(row1.xyz, n), dot(row2.xyz, n));
+    }
+    n = _164;
+    vec4 world = _61.u_model * p;
+    v_depth = -(_61.u_view * world).z;
+    v_normal = _61.u_normalMatrix * n;
+    v_color = _61.u_vertexColor;
+    v_uv = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    gl_Position = _61.u_viewProjection * world;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_tex1;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    highp vec4 texColor = vec4(texture(u_tex0, v_texCoord).xyz, texture(u_tex1, v_texCoord).x);
+    highp float _38 = texColor.w;
+    highp vec4 _39 = texColor;
+    highp vec3 _41 = _39.xyz * _38;
+    texColor.x = _41.x;
+    texColor.y = _41.y;
+    texColor.z = _41.z;
+    FragColor = v_color * texColor;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_tex1;
+
+in highp vec2 v_texCoord;
+in highp vec4 v_color;
+layout(location = 0) out highp vec4 FragColor;
+
+void main()
+{
+    highp vec4 texColor = texture(u_tex0, v_texCoord);
+    texColor.w = texture(u_tex1, v_texCoord).x;
+    highp float _33 = texColor.w;
+    highp vec4 _35 = texColor;
+    highp vec3 _37 = _35.xyz * _33;
+    texColor.x = _37.x;
+    texColor.y = _37.y;
+    texColor.z = _37.z;
+    texColor = v_color * texColor;
+    highp vec3 _67 = vec3(((0.2125999927520751953125 * texColor.x) + (0.715200006961822509765625 * texColor.y)) + (0.072200000286102294921875 * texColor.z));
+    FragColor.x = _67.x;
+    FragColor.y = _67.y;
+    FragColor.z = _67.z;
+    FragColor.w = texColor.w;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec3 u_hsv;
+} _215;
+
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_tex1;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+highp vec3 transformHSV(highp vec3 inColor, highp vec3 hsv)
+{
+    highp float h = hsv.x;
+    highp float s = hsv.y;
+    highp float v = hsv.z;
+    highp float vsu = (v * s) * cos((h * 3.1415927410125732421875) / 180.0);
+    highp float vsw = (v * s) * sin((h * 3.1415927410125732421875) / 180.0);
+    highp vec3 outColor = vec3((((((0.2989999949932098388671875 * v) + (0.7009999752044677734375 * vsu)) + (0.16799999773502349853515625 * vsw)) * inColor.x) + ((((0.58700001239776611328125 * v) - (0.58700001239776611328125 * vsu)) + (0.3300000131130218505859375 * vsw)) * inColor.y)) + ((((0.114000000059604644775390625 * v) - (0.114000000059604644775390625 * vsu)) - (0.4970000088214874267578125 * vsw)) * inColor.z), (((((0.2989999949932098388671875 * v) - (0.2989999949932098388671875 * vsu)) - (0.328000009059906005859375 * vsw)) * inColor.x) + ((((0.58700001239776611328125 * v) + (0.41299998760223388671875 * vsu)) + (0.0350000001490116119384765625 * vsw)) * inColor.y)) + ((((0.114000000059604644775390625 * v) - (0.114000000059604644775390625 * vsu)) + (0.291999995708465576171875 * vsw)) * inColor.z), (((((0.2989999949932098388671875 * v) - (0.300000011920928955078125 * vsu)) + (1.25 * vsw)) * inColor.x) + ((((0.58700001239776611328125 * v) - (0.587999999523162841796875 * vsu)) - (1.0499999523162841796875 * vsw)) * inColor.y)) + ((((0.114000000059604644775390625 * v) + (0.885999977588653564453125 * vsu)) - (0.20299999415874481201171875 * vsw)) * inColor.z));
+    return outColor;
+}
+
+void main()
+{
+    highp vec4 texColor = vec4(texture(u_tex0, v_texCoord).xyz, texture(u_tex1, v_texCoord).x);
+    highp float _203 = texColor.w;
+    highp vec4 _204 = texColor;
+    highp vec3 _206 = _204.xyz * _203;
+    texColor.x = _206.x;
+    texColor.y = _206.y;
+    texColor.z = _206.z;
+    highp vec3 param = texColor.xyz;
+    highp vec3 param_1 = _215.u_hsv;
+    highp vec3 _225 = transformHSV(param, param_1);
+    texColor.x = _225.x;
+    texColor.y = _225.y;
+    texColor.z = _225.z;
+    FragColor = texColor * v_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+in highp vec4 v_color;
+layout(location = 0) out highp vec4 FragColor;
+
+void main()
+{
+    highp vec4 c = texture(u_tex0, v_texCoord);
+    c = v_color * c;
+    highp vec3 _49 = vec3(((0.2125999927520751953125 * c.x) + (0.715200006961822509765625 * c.y)) + (0.072200000286102294921875 * c.z));
+    FragColor.x = _49.x;
+    FragColor.y = _49.y;
+    FragColor.z = _49.z;
+    FragColor.w = c.w;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec3 u_hsv;
+} _193;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+highp vec3 transformHSV(highp vec3 inColor, highp vec3 hsv)
+{
+    highp float h = hsv.x;
+    highp float s = hsv.y;
+    highp float v = hsv.z;
+    highp float vsu = (v * s) * cos((h * 3.1415927410125732421875) / 180.0);
+    highp float vsw = (v * s) * sin((h * 3.1415927410125732421875) / 180.0);
+    highp vec3 outColor = vec3((((((0.2989999949932098388671875 * v) + (0.7009999752044677734375 * vsu)) + (0.16799999773502349853515625 * vsw)) * inColor.x) + ((((0.58700001239776611328125 * v) - (0.58700001239776611328125 * vsu)) + (0.3300000131130218505859375 * vsw)) * inColor.y)) + ((((0.114000000059604644775390625 * v) - (0.114000000059604644775390625 * vsu)) - (0.4970000088214874267578125 * vsw)) * inColor.z), (((((0.2989999949932098388671875 * v) - (0.2989999949932098388671875 * vsu)) - (0.328000009059906005859375 * vsw)) * inColor.x) + ((((0.58700001239776611328125 * v) + (0.41299998760223388671875 * vsu)) + (0.0350000001490116119384765625 * vsw)) * inColor.y)) + ((((0.114000000059604644775390625 * v) - (0.114000000059604644775390625 * vsu)) + (0.291999995708465576171875 * vsw)) * inColor.z), (((((0.2989999949932098388671875 * v) - (0.300000011920928955078125 * vsu)) + (1.25 * vsw)) * inColor.x) + ((((0.58700001239776611328125 * v) - (0.587999999523162841796875 * vsu)) - (1.0499999523162841796875 * vsw)) * inColor.y)) + ((((0.114000000059604644775390625 * v) + (0.885999977588653564453125 * vsu)) - (0.20299999415874481201171875 * vsw)) * inColor.z));
+    return outColor;
+}
+
+void main()
+{
+    highp vec4 outColor = texture(u_tex0, v_texCoord);
+    highp vec3 param = outColor.xyz;
+    highp vec3 param_1 = _193.u_hsv;
+    highp vec3 _203 = transformHSV(param, param_1);
+    outColor.x = _203.x;
+    outColor.y = _203.y;
+    outColor.z = _203.z;
+    FragColor = outColor * v_color.w;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_textColor;
+    highp vec4 u_effectColor;
+    highp float u_effectWidth;
+    mediump int u_labelPass;
+} _40;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    highp float dist = texture(u_tex0, v_texCoord).x;
+    highp float smoothing = fwidth(dist);
+    highp float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, dist);
+    if (_40.u_labelPass == 0)
+    {
+        FragColor = v_color * vec4(_40.u_textColor.xyz, _40.u_textColor.w * alpha);
+    }
+    else
+    {
+        if (_40.u_labelPass == 1)
+        {
+            highp float pivot = clamp(0.5 + (1.0 - _40.u_effectWidth), 0.0, 1.0);
+            highp float mu = smoothstep(0.0, pivot, dist);
+            highp vec4 color = (_40.u_effectColor * (1.0 - alpha)) + (_40.u_textColor * alpha);
+            FragColor = v_color * vec4(color.xyz, max(alpha, mu) * color.w);
+        }
+        else
+        {
+            FragColor = v_color * vec4(_40.u_effectColor.xyz, _40.u_effectColor.w * alpha);
+        }
+    }
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_textColor;
+} _39;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    highp float dist = texture(u_tex0, v_texCoord).x;
+    highp float smoothing = fwidth(dist);
+    highp float alpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, dist) * _39.u_textColor.w;
+    FragColor = v_color * vec4(_39.u_textColor.xyz, alpha);
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_textColor;
+    highp vec4 u_effectColor;
+    highp float u_effectWidth;
+    mediump int u_labelPass;
+} _40;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    highp float dist = texture(u_tex0, v_texCoord).x;
+    highp float smoothing = fwidth(dist);
+    highp float textAlpha = smoothstep(0.5 - smoothing, 0.5 + smoothing, dist);
+    if (_40.u_labelPass == 0)
+    {
+        FragColor = v_color * vec4(_40.u_textColor.xyz, _40.u_textColor.w * textAlpha);
+    }
+    else
+    {
+        if (_40.u_labelPass == 1)
+        {
+            highp float pivot = clamp(0.5 - (_40.u_effectWidth * 0.425000011920928955078125), 0.0, 1.0);
+            highp float outlineAlpha = smoothstep(pivot - smoothing, pivot + smoothing, dist);
+            highp float alpha = outlineAlpha * (1.0 - textAlpha);
+            FragColor = v_color * vec4(_40.u_effectColor.xyz, _40.u_effectColor.w * alpha);
+        }
+        else
+        {
+            FragColor = v_color * vec4(_40.u_effectColor.xyz, _40.u_effectColor.w * textAlpha);
+        }
+    }
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_textColor;
+} _18;
+
+uniform mediump sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = v_color * vec4(_18.u_textColor.xyz, _18.u_textColor.w * texture(u_tex0, v_texCoord).x);
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_effectColor;
+    highp vec4 u_textColor;
+    int u_labelPass;
+} _35;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    highp vec4 texColor = texture(u_tex0, v_texCoord);
+    highp float fontAlpha = texColor.y;
+    highp float outlineAlpha = texColor.x;
+    if (_35.u_labelPass == 0)
+    {
+        FragColor = v_color * vec4(_35.u_textColor.xyz, _35.u_textColor.w * fontAlpha);
+    }
+    else
+    {
+        if (_35.u_labelPass == 1)
+        {
+            FragColor = v_color * vec4(_35.u_effectColor.xyz, (_35.u_effectColor.w * outlineAlpha) * (1.0 - fontAlpha));
+        }
+        else
+        {
+            FragColor = v_color * vec4(_35.u_effectColor.xyz, _35.u_effectColor.w * outlineAlpha);
+        }
+    }
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_startColor;
+    highp vec4 u_endColor;
+    highp vec2 u_center;
+    highp float u_radius;
+    highp float u_expand;
+} _19;
+
+in highp vec4 v_position;
+layout(location = 0) out highp vec4 FragColor;
+
+void main()
+{
+    highp float d = distance(v_position.xy, _19.u_center) / _19.u_radius;
+    if (d <= 1.0)
+    {
+        if (d <= _19.u_expand)
+        {
+            FragColor = _19.u_startColor;
+        }
+        else
+        {
+            FragColor = mix(_19.u_startColor, _19.u_endColor, vec4((d - _19.u_expand) / (1.0 - _19.u_expand)));
+        }
+    }
+    else
+    {
+        FragColor = vec4(0.0);
+    }
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_particlePrim;
+    highp vec4 u_particleEnv;
+    highp vec4 u_particleFlags;
+} _18;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+in highp vec4 v_color;
+layout(location = 0) out highp vec4 FragColor;
+
+void main()
+{
+    highp vec2 uv = v_texCoord;
+    if (_18.u_particleFlags.y > 0.5)
+    {
+        uv.x = 1.0 - abs((2.0 * uv.x) - 1.0);
+    }
+    if (_18.u_particleFlags.z > 0.5)
+    {
+        uv.y = 1.0 - abs((2.0 * uv.y) - 1.0);
+    }
+    highp vec4 texel = texture(u_tex0, uv);
+    highp vec3 _71;
+    if (texel.w > 9.9999997473787516355514526367188e-06)
+    {
+        _71 = texel.xyz / vec3(texel.w);
+    }
+    else
+    {
+        _71 = vec3(0.0);
+    }
+    texel.x = _71.x;
+    texel.y = _71.y;
+    texel.z = _71.z;
+    highp vec4 _94;
+    if (_18.u_particleFlags.x > 0.5)
+    {
+        _94 = mix(_18.u_particleEnv, _18.u_particlePrim, texel);
+    }
+    else
+    {
+        _94 = texel * _18.u_particlePrim;
+    }
+    highp vec4 color = _94;
+    color.w = min(color.w, texel.w);
+    color.w *= v_color.w;
+    if (color.w <= _18.u_particleFlags.w)
+    {
+        discard;
+    }
+    FragColor = vec4(color.xyz * color.w, color.w);
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    FragColor = v_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec3 a_position;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * vec4(a_position, 1.0);
+    v_color = a_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+    mat4 u_MVMatrix;
+    mat3 u_NormalMatrix;
+    vec4 u_lighting;
+    vec4 u_lightDiffuse;
+    vec4 u_lightAmbient;
+    vec4 u_DirLightSourceDirection[1];
+} _35;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+out vec3 v_position;
+out vec3 v_normal;
+out vec3 v_nativeLighting;
+out vec4 v_vertexColor;
+layout(location = 10) in vec4 a_color;
+out vec2 v_uv0;
+layout(location = 2) in vec2 a_texCoord;
+out vec2 v_uv1;
+layout(location = 3) in vec2 a_texCoord1;
+out float v_nativeClipW;
+
+void main()
+{
+    vec4 position = vec4(a_position, 1.0);
+    vec3 normal = a_normal;
+    v_position = (_35.u_MVMatrix * position).xyz;
+    v_normal = _35.u_NormalMatrix * normal;
+    bool _60 = _35.u_lighting.x > 0.5;
+    bool _67;
+    if (_60)
+    {
+        _67 = _35.u_lighting.x < 1.5;
+    }
+    else
+    {
+        _67 = _60;
+    }
+    bool nativeVertexLighting = _67;
+    v_nativeLighting = vec3(0.0);
+    if (nativeVertexLighting)
+    {
+        vec3 l = normalize((-vec3(_35.u_DirLightSourceDirection[0].x, _35.u_DirLightSourceDirection[0].y, _35.u_DirLightSourceDirection[0].z)) + vec3(9.9999999747524270787835121154785e-07));
+        v_nativeLighting = clamp(_35.u_lightAmbient.xyz + (_35.u_lightDiffuse.xyz * max(dot(normalize(v_normal), l), 0.0)), vec3(0.0), vec3(1.0));
+    }
+    v_vertexColor = a_color;
+    v_uv0 = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    v_uv1 = vec2(a_texCoord1.x, 1.0 - a_texCoord1.y);
+    gl_Position = _35.u_MVPMatrix * position;
+    float _146;
+    if (nativeVertexLighting)
+    {
+        _146 = gl_Position.w;
+    }
+    else
+    {
+        _146 = 1.0;
+    }
+    v_nativeClipW = _146;
+    v_nativeLighting *= v_nativeClipW;
+    v_vertexColor *= v_nativeClipW;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+    highp vec4 u_uvScaleRotation[8];
+    highp vec4 u_uvOffsetSet[8];
+    highp vec4 u_surface;
+    highp vec4 u_emissive;
+    highp vec4 u_alpha;
+    highp vec4 u_specular;
+    highp vec4 u_hasMaps0;
+    highp vec4 u_hasMaps1;
+    highp vec4 u_lighting;
+    highp vec4 u_lightDiffuse;
+    highp vec4 u_lightAmbient;
+    highp vec4 u_reflection;
+    highp vec4 u_overlay;
+    highp vec4 u_picaConfig;
+    highp vec4 u_picaTextures;
+    highp vec4 u_picaSecondary;
+    highp vec4 u_picaUvRows[6];
+    highp vec4 u_picaSources[6];
+    highp vec4 u_picaOps[6];
+    highp vec4 u_picaConstant[6];
+    highp vec4 u_picaBuffer;
+    highp vec4 u_picaBufferMask;
+    highp vec4 u_picaLightDirection[4];
+    highp vec4 u_picaLightDiffuse[4];
+    highp vec4 u_picaAmbient;
+    highp vec3 u_CameraPosition;
+    highp vec4 u_DirLightSourceColor[1];
+    highp vec4 u_DirLightSourceDirection[1];
+    highp vec4 u_PointLightSourceColor[1];
+    highp vec4 u_PointLightSourcePosition[1];
+    highp vec4 u_PointLightSourceRangeInverse[1];
+    highp vec4 u_SpotLightSourceColor[1];
+    highp vec4 u_SpotLightSourcePosition[1];
+    highp vec4 u_SpotLightSourceDirection[1];
+    highp vec4 u_SpotLightSourceRangeInverse[1];
+    highp vec4 u_SpotLightSourceInnerAngleCos[1];
+    highp vec4 u_SpotLightSourceOuterAngleCos[1];
+    highp vec3 u_AmbientLightSourceColor;
+} _119;
+
+uniform mediump sampler2D u_picaTex1;
+uniform mediump sampler2D u_picaTex2;
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_normalTex;
+uniform mediump sampler2D u_metalTex;
+uniform mediump sampler2D u_specularTex;
+uniform mediump sampler2D u_occlusionTex;
+uniform mediump sampler2D u_emissiveTex;
+
+in highp vec2 v_uv1;
+in highp vec2 v_uv0;
+in highp vec3 v_normal;
+in highp vec4 v_vertexColor;
+in highp float v_nativeClipW;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec3 v_nativeLighting;
+in highp vec3 v_position;
+
+highp vec2 uv(mediump int slot)
+{
+    highp vec4 a = _119.u_uvScaleRotation[slot];
+    highp vec4 b = _119.u_uvOffsetSet[slot];
+    bvec2 _144 = bvec2(b.z > 0.5);
+    highp vec2 p = vec2(_144.x ? v_uv1.x : v_uv0.x, _144.y ? v_uv1.y : v_uv0.y) * a.xy;
+    return vec2((a.z * p.x) - (a.w * p.y), (a.w * p.x) + (a.z * p.y)) + b.xy;
+}
+
+highp vec2 picaUV(mediump int unit, mediump int slot)
+{
+    mediump int param = slot;
+    highp vec3 p = vec3(uv(param), 1.0);
+    return vec2(dot(_119.u_picaUvRows[unit * 2].xyz, p), dot(_119.u_picaUvRows[(unit * 2) + 1].xyz, p));
+}
+
+highp vec4 straightAlpha(inout highp vec4 c, highp float premultiplied)
+{
+    if (premultiplied > 0.5)
+    {
+        highp vec3 _223;
+        if (c.w > 9.9999997473787516355514526367188e-06)
+        {
+            _223 = c.xyz / vec3(c.w);
+        }
+        else
+        {
+            _223 = vec3(0.0);
+        }
+        c.x = _223.x;
+        c.y = _223.y;
+        c.z = _223.z;
+    }
+    return c;
+}
+
+mediump int picaArgumentCount(mediump int operation)
+{
+    if (((operation == 4) || (operation == 8)) || (operation == 9))
+    {
+        return 3;
+    }
+    if ((operation >= 1) && (operation <= 7))
+    {
+        return 2;
+    }
+    return 1;
+}
+
+highp vec4 picaSource(mediump int source, highp vec4 primary, highp vec4 fragmentPrimary, highp vec4 tex0, highp vec4 tex1, highp vec4 tex2, highp vec4 combinerBuffer, highp vec4 constantColor, highp vec4 previous)
+{
+    if (source == 0)
+    {
+        return primary;
+    }
+    if (source == 1)
+    {
+        return fragmentPrimary;
+    }
+    if (source == 2)
+    {
+        return _119.u_picaSecondary;
+    }
+    if (source == 3)
+    {
+        return tex0;
+    }
+    if (source == 4)
+    {
+        return tex1;
+    }
+    if (source == 5)
+    {
+        return tex2;
+    }
+    if (source == 13)
+    {
+        return combinerBuffer;
+    }
+    if (source == 14)
+    {
+        return constantColor;
+    }
+    if (source == 15)
+    {
+        return previous;
+    }
+    return vec4(0.0);
+}
+
+highp vec3 picaColorOperand(highp vec4 c, mediump int operand)
+{
+    mediump int channel = operand & (-2);
+    highp vec3 _316;
+    if (channel == 2)
+    {
+        _316 = c.www;
+    }
+    else
+    {
+        highp vec3 _324;
+        if (channel == 4)
+        {
+            _324 = c.xxx;
+        }
+        else
+        {
+            highp vec3 _333;
+            if (channel == 8)
+            {
+                _333 = c.yyy;
+            }
+            else
+            {
+                highp vec3 _342;
+                if (channel == 12)
+                {
+                    _342 = c.zzz;
+                }
+                else
+                {
+                    _342 = c.xyz;
+                }
+                _333 = _342;
+            }
+            _324 = _333;
+        }
+        _316 = _324;
+    }
+    highp vec3 result = _316;
+    highp vec3 _357;
+    if ((operand & 1) != 0)
+    {
+        _357 = vec3(1.0) - result;
+    }
+    else
+    {
+        _357 = result;
+    }
+    return _357;
+}
+
+highp float picaAlphaOperand(highp vec4 c, mediump int operand)
+{
+    mediump int channel = operand & (-2);
+    highp float _374;
+    if (channel == 2)
+    {
+        _374 = c.x;
+    }
+    else
+    {
+        highp float _382;
+        if (channel == 4)
+        {
+            _382 = c.y;
+        }
+        else
+        {
+            highp float _391;
+            if (channel == 6)
+            {
+                _391 = c.z;
+            }
+            else
+            {
+                _391 = c.w;
+            }
+            _382 = _391;
+        }
+        _374 = _382;
+    }
+    highp float result = _374;
+    highp float _405;
+    if ((operand & 1) != 0)
+    {
+        _405 = 1.0 - result;
+    }
+    else
+    {
+        _405 = result;
+    }
+    return _405;
+}
+
+highp vec3 picaColorCombine(mediump int mode, highp vec3 a, highp vec3 b, highp vec3 c)
+{
+    if (mode == 1)
+    {
+        return a * b;
+    }
+    if (mode == 2)
+    {
+        return a + b;
+    }
+    if (mode == 3)
+    {
+        return (a + b) - vec3(0.5);
+    }
+    if (mode == 4)
+    {
+        return mix(b, a, c);
+    }
+    if (mode == 5)
+    {
+        return a - b;
+    }
+    if ((mode == 6) || (mode == 7))
+    {
+        return vec3(4.0 * dot(a - vec3(0.5), b - vec3(0.5)));
+    }
+    if (mode == 8)
+    {
+        return (a * b) + c;
+    }
+    if (mode == 9)
+    {
+        return min(a + b, vec3(1.0)) * c;
+    }
+    return a;
+}
+
+highp float picaAlphaCombine(mediump int mode, highp float a, highp float b, highp float c)
+{
+    if (mode == 1)
+    {
+        return a * b;
+    }
+    if (mode == 2)
+    {
+        return a + b;
+    }
+    if (mode == 3)
+    {
+        return (a + b) - 0.5;
+    }
+    if (mode == 4)
+    {
+        return mix(b, a, c);
+    }
+    if (mode == 5)
+    {
+        return a - b;
+    }
+    if ((mode == 6) || (mode == 7))
+    {
+        return (12.0 * (a - 0.5)) * (b - 0.5);
+    }
+    if (mode == 8)
+    {
+        return (a * b) + c;
+    }
+    if (mode == 9)
+    {
+        return min(a + b, 1.0) * c;
+    }
+    return a;
+}
+
+highp vec4 picaColor(highp vec4 primary, highp vec4 tex0, mediump int inputs)
+{
+    bool _605 = (inputs & 2) != 0;
+    bool _612;
+    if (_605)
+    {
+        _612 = _119.u_picaTextures.x > 0.5;
+    }
+    else
+    {
+        _612 = _605;
+    }
+    highp vec4 _613;
+    if (_612)
+    {
+        mediump int param = 1;
+        mediump int param_1 = 6;
+        highp vec4 param_2 = texture(u_picaTex1, picaUV(param, param_1));
+        highp float param_3 = _119.u_picaTextures.z;
+        highp vec4 _629 = straightAlpha(param_2, param_3);
+        _613 = _629;
+    }
+    else
+    {
+        _613 = vec4(1.0);
+    }
+    highp vec4 tex1 = _613;
+    bool _636 = (inputs & 4) != 0;
+    bool _642;
+    if (_636)
+    {
+        _642 = _119.u_picaTextures.y > 0.5;
+    }
+    else
+    {
+        _642 = _636;
+    }
+    highp vec4 _643;
+    if (_642)
+    {
+        mediump int param_4 = 2;
+        mediump int param_5 = 7;
+        highp vec4 param_6 = texture(u_picaTex2, picaUV(param_4, param_5));
+        highp float param_7 = _119.u_picaTextures.w;
+        highp vec4 _656 = straightAlpha(param_6, param_7);
+        _643 = _656;
+    }
+    else
+    {
+        _643 = vec4(1.0);
+    }
+    highp vec4 tex2 = _643;
+    highp vec4 fragmentPrimary = vec4(0.0, 0.0, 0.0, 1.0);
+    if ((inputs & 8) != 0)
+    {
+        highp vec3 normal = normalize(v_normal);
+        highp vec3 light = _119.u_picaAmbient.xyz;
+        highp float _698;
+        highp float _714;
+        for (mediump int i = 0; i < 4; i++)
+        {
+            highp vec3 direction = _119.u_picaLightDirection[i].xyz;
+            highp float lengthSquared = dot(direction, direction);
+            if (lengthSquared > 9.9999999747524270787835121154785e-07)
+            {
+                _698 = dot(normal, (-direction) * inversesqrt(lengthSquared));
+            }
+            else
+            {
+                _698 = 0.0;
+            }
+            highp float response = _698;
+            if (_119.u_picaLightDirection[i].w > 0.5)
+            {
+                _714 = abs(response);
+            }
+            else
+            {
+                _714 = max(response, 0.0);
+            }
+            response = _714;
+            light += ((_119.u_picaLightDiffuse[i].xyz * response) * _119.u_picaLightDiffuse[i].w);
+        }
+        fragmentPrimary = vec4(clamp(light, vec3(0.0), vec3(1.0)), 1.0);
+    }
+    highp vec4 previous = primary;
+    highp vec4 combinerBuffer = _119.u_picaBuffer;
+    int _756;
+    if (_119.u_picaConfig.z > 0.5)
+    {
+        _756 = min(int(_119.u_picaConfig.z), 6);
+    }
+    else
+    {
+        _756 = 6;
+    }
+    mediump int stageCount = _756;
+    mediump int _807;
+    highp vec3 rgb[3];
+    highp float alpha[3];
+    highp float _939;
+    for (mediump int stage = 0; stage < 6; stage++)
+    {
+        if (stage >= stageCount)
+        {
+            break;
+        }
+        mediump ivec4 sourceCodes = ivec4(_119.u_picaSources[stage]);
+        highp vec4 operation = _119.u_picaOps[stage];
+        mediump int colorMode = int(operation.x);
+        mediump int alphaMode = int(operation.y);
+        mediump int param_8 = colorMode;
+        mediump int colorArguments = picaArgumentCount(param_8);
+        if (colorMode == 7)
+        {
+            _807 = 0;
+        }
+        else
+        {
+            mediump int param_9 = alphaMode;
+            _807 = picaArgumentCount(param_9);
+        }
+        mediump int alphaArguments = _807;
+        for (mediump int argument = 0; argument < 3; argument++)
+        {
+            mediump int shift = argument * 4;
+            rgb[argument] = vec3(0.0);
+            alpha[argument] = 0.0;
+            if (argument < colorArguments)
+            {
+                mediump int param_10 = (sourceCodes.x >> shift) & 15;
+                highp vec4 param_11 = primary;
+                highp vec4 param_12 = fragmentPrimary;
+                highp vec4 param_13 = tex0;
+                highp vec4 param_14 = tex1;
+                highp vec4 param_15 = tex2;
+                highp vec4 param_16 = combinerBuffer;
+                highp vec4 param_17 = _119.u_picaConstant[stage];
+                highp vec4 param_18 = previous;
+                highp vec4 source = picaSource(param_10, param_11, param_12, param_13, param_14, param_15, param_16, param_17, param_18);
+                highp vec4 param_19 = source;
+                mediump int param_20 = (sourceCodes.z >> shift) & 15;
+                rgb[argument] = picaColorOperand(param_19, param_20);
+            }
+            if (argument < alphaArguments)
+            {
+                mediump int param_21 = (sourceCodes.y >> shift) & 15;
+                highp vec4 param_22 = primary;
+                highp vec4 param_23 = fragmentPrimary;
+                highp vec4 param_24 = tex0;
+                highp vec4 param_25 = tex1;
+                highp vec4 param_26 = tex2;
+                highp vec4 param_27 = combinerBuffer;
+                highp vec4 param_28 = _119.u_picaConstant[stage];
+                highp vec4 param_29 = previous;
+                highp vec4 source_1 = picaSource(param_21, param_22, param_23, param_24, param_25, param_26, param_27, param_28, param_29);
+                highp vec4 param_30 = source_1;
+                mediump int param_31 = (sourceCodes.w >> shift) & 15;
+                alpha[argument] = picaAlphaOperand(param_30, param_31);
+            }
+        }
+        mediump int param_32 = colorMode;
+        highp vec3 param_33 = rgb[0];
+        highp vec3 param_34 = rgb[1];
+        highp vec3 param_35 = rgb[2];
+        highp vec3 colorResult = picaColorCombine(param_32, param_33, param_34, param_35);
+        if (colorMode == 7)
+        {
+            _939 = colorResult.x;
+        }
+        else
+        {
+            mediump int param_36 = alphaMode;
+            highp float param_37 = alpha[0];
+            highp float param_38 = alpha[1];
+            highp float param_39 = alpha[2];
+            _939 = picaAlphaCombine(param_36, param_37, param_38, param_39);
+        }
+        highp float alphaResult = _939;
+        highp vec4 outputColor = clamp(clamp(vec4(colorResult, alphaResult), vec4(0.0), vec4(1.0)) * vec4(operation.zzz, operation.w), vec4(0.0), vec4(1.0));
+        if ((stage >= 1) && (stage <= 4))
+        {
+            mediump int bit = 1 << (stage - 1);
+            if ((int(_119.u_picaBufferMask.x) & bit) != 0)
+            {
+                combinerBuffer.x = previous.xyz.x;
+                combinerBuffer.y = previous.xyz.y;
+                combinerBuffer.z = previous.xyz.z;
+            }
+            if ((int(_119.u_picaBufferMask.y) & bit) != 0)
+            {
+                combinerBuffer.w = previous.w;
+            }
+        }
+        previous = outputColor;
+    }
+    highp vec4 _1022 = previous;
+    highp vec3 _1029 = clamp(_1022.xyz * _119.u_picaConfig.y, vec3(0.0), vec3(1.0));
+    previous.x = _1029.x;
+    previous.y = _1029.y;
+    previous.z = _1029.z;
+    return previous;
+}
+
+highp vec3 linearColor(highp vec3 c)
+{
+    return pow(max(c, vec3(0.0)), vec3(2.2000000476837158203125));
+}
+
+highp vec3 lighting(inout highp vec3 n, highp vec3 v, highp vec3 l, highp vec3 radiance, highp vec3 diffuse, highp vec3 f0, highp float roughness)
+{
+    if (_119.u_lighting.x > 1.5)
+    {
+        n = faceforward(n, -l, n);
+        bvec3 _1059 = bvec3(abs(l.y) < 0.920000016689300537109375);
+        highp vec3 reference = vec3(_1059.x ? vec3(0.0, 1.0, 0.0).x : vec3(1.0, 0.0, 0.0).x, _1059.y ? vec3(0.0, 1.0, 0.0).y : vec3(1.0, 0.0, 0.0).y, _1059.z ? vec3(0.0, 1.0, 0.0).z : vec3(1.0, 0.0, 0.0).z);
+        highp vec3 tangent = normalize(cross(reference, l));
+        highp vec3 bitangent = normalize(cross(l, tangent));
+        highp float response = 0.0;
+        highp vec2 _1083;
+        highp vec2 _1091;
+        highp vec2 _1099;
+        for (mediump int i = 0; i < 5; i++)
+        {
+            if (i == 1)
+            {
+                _1083 = vec2(0.1599999964237213134765625, 0.0);
+            }
+            else
+            {
+                if (i == 2)
+                {
+                    _1091 = vec2(-0.1599999964237213134765625, 0.0);
+                }
+                else
+                {
+                    if (i == 3)
+                    {
+                        _1099 = vec2(0.0, 0.1599999964237213134765625);
+                    }
+                    else
+                    {
+                        bvec2 _1108 = bvec2(i == 4);
+                        _1099 = vec2(_1108.x ? vec2(0.0, -0.1599999964237213134765625).x : vec2(0.0).x, _1108.y ? vec2(0.0, -0.1599999964237213134765625).y : vec2(0.0).y);
+                    }
+                    _1091 = _1099;
+                }
+                _1083 = _1091;
+            }
+            highp vec2 offset = _1083;
+            highp float wrapped = clamp((dot(n, normalize((l + (tangent * offset.x)) + (bitangent * offset.y))) + 0.3499999940395355224609375) / 1.35000002384185791015625, 0.0, 1.0);
+            response += ((wrapped * wrapped) * (3.0 - (2.0 * wrapped)));
+        }
+        highp vec3 h = normalize(l + v);
+        highp float nl = max(dot(n, l), 0.0);
+        highp float nv = max(dot(n, v), 0.0);
+        highp float nh = max(dot(n, h), 0.0);
+        highp float vh = max(dot(v, h), 0.0);
+        highp float r = clamp(sqrt(2.0 / (max(_119.u_lighting.y, 1.0) + 2.0)), 0.2800000011920928955078125, 0.819999992847442626953125);
+        highp float a2 = r * r;
+        a2 *= a2;
+        highp float denominator = ((nh * nh) * (a2 - 1.0)) + 1.0;
+        highp float distribution = a2 / max((3.1415927410125732421875 * denominator) * denominator, 0.001000000047497451305389404296875);
+        highp float k = ((r + 1.0) * (r + 1.0)) / 8.0;
+        highp float gv = nv / ((nv * (1.0 - k)) + k);
+        highp float gl = nl / ((nl * (1.0 - k)) + k);
+        highp vec3 fresnel = vec3(0.039999999105930328369140625) + (vec3(0.959999978542327880859375) * pow(1.0 - vh, 5.0));
+        highp vec3 specular = (fresnel * ((distribution * gv) * gl)) / vec3(max((4.0 * nv) * nl, 0.00999999977648258209228515625));
+        return radiance * (((diffuse * response) * 0.20000000298023223876953125) + specular);
+    }
+    highp vec3 h_1 = normalize(v + l);
+    highp float nl_1 = max(dot(n, l), 0.0);
+    highp float nv_1 = max(dot(n, v), 0.001000000047497451305389404296875);
+    highp float nh_1 = max(dot(n, h_1), 0.0);
+    highp float a = roughness * roughness;
+    highp float a2_1 = a * a;
+    highp float d = ((nh_1 * nh_1) * (a2_1 - 1.0)) + 1.0;
+    highp float distribution_1 = a2_1 / max((3.1415927410125732421875 * d) * d, 9.9999997473787516355514526367188e-05);
+    highp float k_1 = ((roughness + 1.0) * (roughness + 1.0)) / 8.0;
+    highp float geometry = ((nv_1 / ((nv_1 * (1.0 - k_1)) + k_1)) * nl_1) / ((nl_1 * (1.0 - k_1)) + k_1);
+    highp vec3 fresnel_1 = f0 + ((vec3(1.0) - f0) * pow(1.0 - max(dot(h_1, v), 0.0), 5.0));
+    highp vec3 specular_1 = (fresnel_1 * (distribution_1 * geometry)) / vec3(max((4.0 * nv_1) * nl_1, 9.9999997473787516355514526367188e-05));
+    return (((((vec3(1.0) - fresnel_1) * diffuse) / vec3(3.1415927410125732421875)) + specular_1) * radiance) * nl_1;
+}
+
+void main()
+{
+    bool usePica = _119.u_picaConfig.x > 0.5;
+    mediump int picaInputs = int(_119.u_picaConfig.w);
+    if ((picaInputs & 16) == 0)
+    {
+        picaInputs = 15;
+    }
+    highp vec4 texel = vec4(1.0);
+    bool _1394 = !usePica;
+    bool _1401;
+    if (!_1394)
+    {
+        _1401 = (picaInputs & 1) != 0;
+    }
+    else
+    {
+        _1401 = _1394;
+    }
+    if (_1401)
+    {
+        highp vec2 _1407;
+        if (usePica)
+        {
+            mediump int param = 0;
+            mediump int param_1 = 0;
+            _1407 = picaUV(param, param_1);
+        }
+        else
+        {
+            mediump int param_2 = 0;
+            _1407 = uv(param_2);
+        }
+        texel = texture(u_tex0, _1407);
+    }
+    highp vec4 param_3 = texel;
+    highp float param_4 = _119.u_hasMaps1.w;
+    highp vec4 _1423 = straightAlpha(param_3, param_4);
+    texel = _1423;
+    highp vec4 vertexColor = v_vertexColor / vec4(max(v_nativeClipW, 9.9999997473787516355514526367188e-06));
+    highp vec4 _1436;
+    if (usePica)
+    {
+        highp vec4 param_5 = vertexColor;
+        highp vec4 param_6 = texel;
+        mediump int param_7 = picaInputs;
+        _1436 = picaColor(param_5, param_6, param_7) * _119.u_color;
+    }
+    else
+    {
+        _1436 = (texel * _119.u_color) * vertexColor;
+    }
+    highp vec4 base = _1436;
+    bool _1459 = _119.u_alpha.y > 0.5;
+    bool _1465;
+    if (_1459)
+    {
+        _1465 = base.w <= 0.0;
+    }
+    else
+    {
+        _1465 = _1459;
+    }
+    if (_1465)
+    {
+        discard;
+    }
+    if (_119.u_alpha.y < 0.5)
+    {
+        base.w = _119.u_color.w;
+    }
+    else
+    {
+        if (_119.u_alpha.y < 1.5)
+        {
+            if (base.w < _119.u_alpha.x)
+            {
+                discard;
+            }
+            base.w = _119.u_color.w;
+        }
+    }
+    if (usePica)
+    {
+        FragColor = vec4(mix(base.xyz, _119.u_overlay.xyz, vec3(clamp(_119.u_overlay.w, 0.0, 1.0))), base.w);
+        return;
+    }
+    bool _1518 = _119.u_lighting.x > 0.5;
+    bool _1524;
+    if (_1518)
+    {
+        _1524 = _119.u_lighting.x < 1.5;
+    }
+    else
+    {
+        _1524 = _1518;
+    }
+    if (_1524)
+    {
+        highp vec3 _1533;
+        if (_119.u_emissive.w > 0.5)
+        {
+            _1533 = vec3(1.0);
+        }
+        else
+        {
+            _1533 = v_nativeLighting / vec3(max(v_nativeClipW, 9.9999997473787516355514526367188e-06));
+        }
+        highp vec3 lit = base.xyz * _1533;
+        FragColor = vec4(mix(lit, _119.u_overlay.xyz, vec3(clamp(_119.u_overlay.w, 0.0, 1.0))), base.w);
+        return;
+    }
+    highp vec3 n = normalize(v_normal);
+    if (!gl_FrontFacing)
+    {
+        n = -n;
+    }
+    if (_119.u_hasMaps0.y > 0.5)
+    {
+        mediump int param_8 = 1;
+        highp vec2 p = uv(param_8);
+        highp vec3 dp1 = dFdx(v_position);
+        highp vec3 dp2 = dFdy(v_position);
+        highp vec2 duv1 = dFdx(p);
+        highp vec2 duv2 = dFdy(p);
+        highp vec3 a = cross(dp2, n);
+        highp vec3 b = cross(n, dp1);
+        highp vec3 t = (a * duv1.x) + (b * duv2.x);
+        highp vec3 bt = (a * duv1.y) + (b * duv2.y);
+        highp float inverseLength = inversesqrt(max(max(dot(t, t), dot(bt, bt)), 9.9999999747524270787835121154785e-07));
+        highp vec3 mapped = (texture(u_normalTex, p).xyz * 2.0) - vec3(1.0);
+        highp vec3 _1642 = mapped;
+        highp vec2 _1644 = _1642.xy * _119.u_surface.z;
+        mapped.x = _1644.x;
+        mapped.y = _1644.y;
+        n = normalize(mat3(vec3(t * inverseLength), vec3(bt * inverseLength), vec3(n)) * mapped);
+    }
+    highp vec3 param_9 = base.xyz;
+    highp vec3 albedo = linearColor(param_9);
+    if (_119.u_lighting.x > 1.5)
+    {
+        highp vec3 param_10 = _119.u_lightDiffuse.xyz;
+        albedo *= linearColor(param_10);
+    }
+    highp float metal = _119.u_surface.x;
+    highp float roughness = _119.u_surface.y;
+    if (_119.u_hasMaps0.z > 0.5)
+    {
+        mediump int param_11 = 2;
+        highp vec4 mr = texture(u_metalTex, uv(param_11));
+        metal *= mr.z;
+        roughness *= mr.y;
+    }
+    highp vec3 f0 = mix(vec3(0.039999999105930328369140625), albedo, vec3(metal));
+    highp vec3 diffuse = albedo * (1.0 - metal);
+    if (_119.u_alpha.z > 0.5)
+    {
+        highp vec4 _1735;
+        if (_119.u_hasMaps1.y > 0.5)
+        {
+            mediump int param_12 = 5;
+            _1735 = texture(u_specularTex, uv(param_12));
+        }
+        else
+        {
+            _1735 = vec4(_119.u_specular.xyz, _119.u_alpha.w);
+        }
+        highp vec4 sg = _1735;
+        highp vec3 param_13 = sg.xyz;
+        f0 = linearColor(param_13);
+        roughness = 1.0 - sg.w;
+        diffuse = albedo * (1.0 - max(max(f0.x, f0.y), f0.z));
+    }
+    roughness = clamp(roughness, 0.04500000178813934326171875, 1.0);
+    highp float _1779;
+    if (_119.u_hasMaps0.w > 0.5)
+    {
+        mediump int param_14 = 3;
+        _1779 = mix(1.0, texture(u_occlusionTex, uv(param_14)).x, _119.u_surface.w);
+    }
+    else
+    {
+        _1779 = 1.0;
+    }
+    highp float ao = _1779;
+    highp vec3 emissive = _119.u_emissive.xyz;
+    if (_119.u_hasMaps1.x > 0.5)
+    {
+        mediump int param_15 = 4;
+        highp vec3 param_16 = texture(u_emissiveTex, uv(param_15)).xyz;
+        emissive *= linearColor(param_16);
+    }
+    highp vec3 result = albedo;
+    if (_119.u_emissive.w < 0.5)
+    {
+        highp vec3 v = normalize(_119.u_CameraPosition - v_position);
+        result = (_119.u_AmbientLightSourceColor * (diffuse + (f0 * 0.20000000298023223876953125))) * ao;
+        if (_119.u_lighting.x > 1.5)
+        {
+            highp vec3 key = normalize((-vec3(_119.u_DirLightSourceDirection[0].x, _119.u_DirLightSourceDirection[0].y, _119.u_DirLightSourceDirection[0].z)) + vec3(9.9999999747524270787835121154785e-07));
+            n = faceforward(n, -key, n);
+            highp vec3 param_17 = _119.u_reflection.xyz;
+            highp vec3 reflection = linearColor(param_17);
+            highp float hemisphere = (dot(n, vec3(0.0, 1.0, 0.0)) * 0.5) + 0.5;
+            highp vec3 param_18 = _119.u_lightAmbient.xyz;
+            result = ((diffuse * mix(_119.u_AmbientLightSourceColor * vec3(0.579999983310699462890625, 0.540000021457672119140625, 0.5), mix(_119.u_AmbientLightSourceColor, reflection, vec3(0.23999999463558197021484375)), vec3(hemisphere))) * linearColor(param_18)) * ao;
+            highp float facing = max(dot(n, v), 0.0);
+            highp vec3 reflected = reflect(-v, n);
+            highp vec3 sky = mix(vec3(0.054999999701976776123046875, 0.064999997615814208984375, 0.085000000894069671630859375), reflection, vec3(clamp((reflected.y * 0.5) + 0.5, 0.0, 1.0)));
+            highp vec3 rim = vec3(0.039999999105930328369140625) + ((reflection - vec3(0.039999999105930328369140625)) * pow(1.0 - facing, 5.0));
+            result += ((sky * rim) * _119.u_reflection.w);
+        }
+        for (mediump int i = 0; i < 1; i++)
+        {
+            highp vec3 direction = vec3(_119.u_DirLightSourceDirection[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _119.u_DirLightSourceDirection[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _119.u_DirLightSourceDirection[((i * 3) + 2) / 4][((i * 3) + 2) % 4]);
+            highp vec3 param_19 = n;
+            highp vec3 param_20 = v;
+            highp vec3 param_21 = normalize((-direction) + vec3(9.9999999747524270787835121154785e-07));
+            highp vec3 param_22 = vec3(_119.u_DirLightSourceColor[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _119.u_DirLightSourceColor[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _119.u_DirLightSourceColor[((i * 3) + 2) / 4][((i * 3) + 2) % 4]);
+            highp vec3 param_23 = diffuse;
+            highp vec3 param_24 = f0;
+            highp float param_25 = roughness;
+            highp vec3 _2024 = lighting(param_19, param_20, param_21, param_22, param_23, param_24, param_25);
+            result += _2024;
+        }
+        for (mediump int i_1 = 0; i_1 < 1; i_1++)
+        {
+            highp vec3 direction_1 = vec3(_119.u_PointLightSourcePosition[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _119.u_PointLightSourcePosition[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _119.u_PointLightSourcePosition[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]) - v_position;
+            highp float range = length(direction_1) * _119.u_PointLightSourceRangeInverse[i_1 / 4][i_1 % 4];
+            highp float attenuation = max(0.0, 1.0 - (range * range));
+            highp vec3 param_26 = n;
+            highp vec3 param_27 = v;
+            highp vec3 param_28 = normalize(direction_1 + vec3(9.9999999747524270787835121154785e-07));
+            highp vec3 param_29 = vec3(_119.u_PointLightSourceColor[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _119.u_PointLightSourceColor[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _119.u_PointLightSourceColor[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]) * attenuation;
+            highp vec3 param_30 = diffuse;
+            highp vec3 param_31 = f0;
+            highp float param_32 = roughness;
+            highp vec3 _2138 = lighting(param_26, param_27, param_28, param_29, param_30, param_31, param_32);
+            result += _2138;
+        }
+        for (mediump int i_2 = 0; i_2 < 1; i_2++)
+        {
+            highp vec3 direction_2 = vec3(_119.u_SpotLightSourcePosition[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _119.u_SpotLightSourcePosition[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _119.u_SpotLightSourcePosition[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) - v_position;
+            highp vec3 l = normalize(direction_2 + vec3(9.9999999747524270787835121154785e-07));
+            highp float range_1 = length(direction_2) * _119.u_SpotLightSourceRangeInverse[i_2 / 4][i_2 % 4];
+            highp float angle = dot(-l, normalize(vec3(_119.u_SpotLightSourceDirection[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _119.u_SpotLightSourceDirection[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _119.u_SpotLightSourceDirection[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) + vec3(9.9999999747524270787835121154785e-07)));
+            highp float attenuation_1 = max(0.0, 1.0 - (range_1 * range_1)) * smoothstep(_119.u_SpotLightSourceOuterAngleCos[i_2 / 4][i_2 % 4], _119.u_SpotLightSourceInnerAngleCos[i_2 / 4][i_2 % 4], angle);
+            if (_119.u_lighting.x > 1.5)
+            {
+                highp float cone = smoothstep(_119.u_SpotLightSourceOuterAngleCos[i_2 / 4][i_2 % 4], _119.u_SpotLightSourceInnerAngleCos[i_2 / 4][i_2 % 4], angle);
+                highp float falloff = max(0.0, 1.0 - (range_1 * range_1));
+                falloff *= falloff;
+                highp float wrapped = clamp((dot(n, l) + 0.2800000011920928955078125) / 1.2799999713897705078125, 0.0, 1.0);
+                highp float response = (wrapped * wrapped) * (3.0 - (2.0 * wrapped));
+                highp float specular = pow(max(dot(n, normalize(l + v)), 0.0), max(_119.u_lighting.y, 1.0));
+                highp vec3 radiance = (vec3(_119.u_SpotLightSourceColor[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _119.u_SpotLightSourceColor[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _119.u_SpotLightSourceColor[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) * cone) * falloff;
+                result += (radiance * ((diffuse * response) + vec3(specular * 0.23999999463558197021484375)));
+            }
+            else
+            {
+                highp vec3 param_33 = n;
+                highp vec3 param_34 = v;
+                highp vec3 param_35 = l;
+                highp vec3 param_36 = vec3(_119.u_SpotLightSourceColor[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _119.u_SpotLightSourceColor[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _119.u_SpotLightSourceColor[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) * attenuation_1;
+                highp vec3 param_37 = diffuse;
+                highp vec3 param_38 = f0;
+                highp float param_39 = roughness;
+                highp vec3 _2414 = lighting(param_33, param_34, param_35, param_36, param_37, param_38, param_39);
+                result += _2414;
+            }
+        }
+    }
+    highp vec3 lit_1 = pow(max(result + emissive, vec3(0.0)), vec3(0.4545454680919647216796875));
+    FragColor = vec4(mix(lit_1, _119.u_overlay.xyz, vec3(clamp(_119.u_overlay.w, 0.0, 1.0))), base.w);
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+    mat4 u_MVMatrix;
+    mat3 u_NormalMatrix;
+    vec4 u_lighting;
+    vec4 u_lightDiffuse;
+    vec4 u_lightAmbient;
+    vec4 u_DirLightSourceDirection[1];
+    vec4 u_vertexColor;
+} _35;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+out vec3 v_position;
+out vec3 v_normal;
+out vec3 v_nativeLighting;
+out vec4 v_vertexColor;
+out vec2 v_uv0;
+layout(location = 2) in vec2 a_texCoord;
+out vec2 v_uv1;
+layout(location = 3) in vec2 a_texCoord1;
+out float v_nativeClipW;
+
+void main()
+{
+    vec4 position = vec4(a_position, 1.0);
+    vec3 normal = a_normal;
+    v_position = (_35.u_MVMatrix * position).xyz;
+    v_normal = _35.u_NormalMatrix * normal;
+    bool _60 = _35.u_lighting.x > 0.5;
+    bool _67;
+    if (_60)
+    {
+        _67 = _35.u_lighting.x < 1.5;
+    }
+    else
+    {
+        _67 = _60;
+    }
+    bool nativeVertexLighting = _67;
+    v_nativeLighting = vec3(0.0);
+    if (nativeVertexLighting)
+    {
+        vec3 l = normalize((-vec3(_35.u_DirLightSourceDirection[0].x, _35.u_DirLightSourceDirection[0].y, _35.u_DirLightSourceDirection[0].z)) + vec3(9.9999999747524270787835121154785e-07));
+        v_nativeLighting = clamp(_35.u_lightAmbient.xyz + (_35.u_lightDiffuse.xyz * max(dot(normalize(v_normal), l), 0.0)), vec3(0.0), vec3(1.0));
+    }
+    v_vertexColor = _35.u_vertexColor;
+    v_uv0 = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    v_uv1 = vec2(a_texCoord1.x, 1.0 - a_texCoord1.y);
+    gl_Position = _35.u_MVPMatrix * position;
+    float _146;
+    if (nativeVertexLighting)
+    {
+        _146 = gl_Position.w;
+    }
+    else
+    {
+        _146 = 1.0;
+    }
+    v_nativeClipW = _146;
+    v_nativeLighting *= v_nativeClipW;
+    v_vertexColor *= v_nativeClipW;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+} _17;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    FragColor = v_color * _17.u_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+} _28;
+
+uniform mediump sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec2 v_texCoord;
+in highp vec4 v_color;
+
+void main()
+{
+    FragColor = (texture(u_tex0, v_texCoord) * v_color) * _28.u_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_PMatrix;
+} _37;
+
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+layout(location = 0) in vec4 a_position;
+
+void main()
+{
+    v_color = a_color;
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+    gl_Position = _37.u_PMatrix * a_position;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = v_color * step(0.0, 1.0 - length(v_texCoord));
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    float u_alpha;
+    mat4 u_MVPMatrix;
+} _26;
+
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+layout(location = 0) in vec4 a_position;
+
+void main()
+{
+    v_color = vec4((a_color.xyz * a_color.w) * _26.u_alpha, a_color.w * _26.u_alpha);
+    v_texCoord = a_texCoord;
+    gl_Position = _26.u_MVPMatrix * a_position;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    float u_alpha;
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+layout(location = 2) in vec2 a_texCoord;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    gl_PointSize = a_texCoord.x;
+    v_color = vec4((a_color.xyz * a_color.w) * _18.u_alpha, a_color.w * _18.u_alpha);
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    FragColor = v_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    v_color = a_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    vec4 u_PointLightSourcePosition[1];
+    vec4 u_SpotLightSourcePosition[1];
+    mat4 u_MVPMatrix;
+    mat4 u_MVMatrix;
+    mat4 u_PMatrix;
+    mat3 u_NormalMatrix;
+} _22;
+
+layout(location = 0) in vec4 a_position;
+out vec3 v_vertexToPointLightDirection[1];
+out vec3 v_vertexToSpotLightDirection[1];
+out vec3 v_normal;
+layout(location = 1) in vec3 a_normal;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    vec4 ePosition = _22.u_MVMatrix * a_position;
+    for (int i = 0; i < 1; i++)
+    {
+        v_vertexToPointLightDirection[i] = vec3(_22.u_PointLightSourcePosition[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _22.u_PointLightSourcePosition[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _22.u_PointLightSourcePosition[((i * 3) + 2) / 4][((i * 3) + 2) % 4]) - ePosition.xyz;
+    }
+    for (int i_1 = 0; i_1 < 1; i_1++)
+    {
+        v_vertexToSpotLightDirection[i_1] = vec3(_22.u_SpotLightSourcePosition[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _22.u_SpotLightSourcePosition[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _22.u_SpotLightSourcePosition[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]) - ePosition.xyz;
+    }
+    v_normal = _22.u_NormalMatrix * a_normal;
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+    gl_Position = _22.u_PMatrix * ePosition;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    vec4 u_DirLightSourceDirection[1];
+    vec4 u_SpotLightSourceDirection[1];
+    vec4 u_PointLightSourcePosition[1];
+    vec4 u_SpotLightSourcePosition[1];
+    mat4 u_MVPMatrix;
+    mat4 u_MVMatrix;
+    mat4 u_PMatrix;
+    mat3 u_NormalMatrix;
+} _24;
+
+layout(location = 0) in vec4 a_position;
+layout(location = 8) in vec3 a_tangent;
+layout(location = 9) in vec3 a_binormal;
+layout(location = 1) in vec3 a_normal;
+out vec3 v_dirLightDirection[1];
+out vec3 v_vertexToPointLightDirection[1];
+out vec3 v_vertexToSpotLightDirection[1];
+out vec3 v_spotLightDirection[1];
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    vec4 ePosition = _24.u_MVMatrix * a_position;
+    vec3 eTangent = normalize(_24.u_NormalMatrix * a_tangent);
+    vec3 eBinormal = normalize(_24.u_NormalMatrix * a_binormal);
+    vec3 eNormal = normalize(_24.u_NormalMatrix * a_normal);
+    for (int i = 0; i < 1; i++)
+    {
+        v_dirLightDirection[i].x = dot(eTangent, vec3(_24.u_DirLightSourceDirection[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _24.u_DirLightSourceDirection[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _24.u_DirLightSourceDirection[((i * 3) + 2) / 4][((i * 3) + 2) % 4]));
+        v_dirLightDirection[i].y = dot(eBinormal, vec3(_24.u_DirLightSourceDirection[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _24.u_DirLightSourceDirection[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _24.u_DirLightSourceDirection[((i * 3) + 2) / 4][((i * 3) + 2) % 4]));
+        v_dirLightDirection[i].z = dot(eNormal, vec3(_24.u_DirLightSourceDirection[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _24.u_DirLightSourceDirection[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _24.u_DirLightSourceDirection[((i * 3) + 2) / 4][((i * 3) + 2) % 4]));
+    }
+    for (int i_1 = 0; i_1 < 1; i_1++)
+    {
+        vec3 pointLightDir = vec3(_24.u_PointLightSourcePosition[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _24.u_PointLightSourcePosition[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _24.u_PointLightSourcePosition[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]) - ePosition.xyz;
+        v_vertexToPointLightDirection[i_1].x = dot(eTangent, pointLightDir);
+        v_vertexToPointLightDirection[i_1].y = dot(eBinormal, pointLightDir);
+        v_vertexToPointLightDirection[i_1].z = dot(eNormal, pointLightDir);
+    }
+    for (int i_2 = 0; i_2 < 1; i_2++)
+    {
+        vec3 spotLightDir = vec3(_24.u_SpotLightSourcePosition[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _24.u_SpotLightSourcePosition[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _24.u_SpotLightSourcePosition[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) - ePosition.xyz;
+        v_vertexToSpotLightDirection[i_2].x = dot(eTangent, spotLightDir);
+        v_vertexToSpotLightDirection[i_2].y = dot(eBinormal, spotLightDir);
+        v_vertexToSpotLightDirection[i_2].z = dot(eNormal, spotLightDir);
+        v_spotLightDirection[i_2].x = dot(eTangent, vec3(_24.u_SpotLightSourceDirection[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _24.u_SpotLightSourceDirection[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _24.u_SpotLightSourceDirection[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]));
+        v_spotLightDirection[i_2].y = dot(eBinormal, vec3(_24.u_SpotLightSourceDirection[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _24.u_SpotLightSourceDirection[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _24.u_SpotLightSourceDirection[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]));
+        v_spotLightDirection[i_2].z = dot(eNormal, vec3(_24.u_SpotLightSourceDirection[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _24.u_SpotLightSourceDirection[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _24.u_SpotLightSourceDirection[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]));
+    }
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+    gl_Position = _24.u_PMatrix * ePosition;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp float u_alpha_value;
+} _29;
+
+uniform mediump sampler2D u_tex0;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    highp vec4 texColor = texture(u_tex0, v_texCoord);
+    if (texColor.w <= _29.u_alpha_value)
+    {
+        discard;
+    }
+    FragColor = texColor * v_color;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform mediump sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = v_color * texture(u_tex0, v_texCoord);
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    v_color = a_color;
+    v_texCoord = a_texCoord;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 3) in mat4 a_instance;
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    gl_Position = (_18.u_MVPMatrix * a_instance) * a_position;
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform mediump sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = texture(u_tex0, v_texCoord);
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    v_texCoord = a_texCoord;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    vec4 u_color;
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+out vec4 v_color;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    v_color = _18.u_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+out vec4 v_position;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    v_position = a_position;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+} _17;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+void main()
+{
+    FragColor = v_color * _17.u_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _23;
+
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+layout(location = 0) in vec4 a_position;
+
+void main()
+{
+    v_color = a_color;
+    gl_Position = _23.u_MVPMatrix * a_position;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+} _28;
+
+uniform mediump sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec2 v_texCoord;
+in highp vec4 v_color;
+
+void main()
+{
+    FragColor = (texture(u_tex0, v_texCoord) * v_color) * _28.u_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _37;
+
+out vec4 v_color;
+layout(location = 10) in vec4 a_color;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+layout(location = 0) in vec4 a_position;
+
+void main()
+{
+    v_color = a_color;
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+    gl_Position = _37.u_MVPMatrix * a_position;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+    mat4 u_MVMatrix;
+    mat3 u_NormalMatrix;
+    vec4 u_lighting;
+    vec4 u_lightDiffuse;
+    vec4 u_lightAmbient;
+    vec4 u_DirLightSourceDirection[1];
+    vec4 u_matrixPalette[180];
+} _63;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+layout(location = 11) in vec4 a_blendIndex;
+layout(location = 12) in vec4 a_blendWeight;
+out vec3 v_position;
+out vec3 v_normal;
+out vec3 v_nativeLighting;
+out vec4 v_vertexColor;
+layout(location = 10) in vec4 a_color;
+out vec2 v_uv0;
+layout(location = 2) in vec2 a_texCoord;
+out vec2 v_uv1;
+layout(location = 3) in vec2 a_texCoord1;
+out float v_nativeClipW;
+
+void main()
+{
+    vec4 position = vec4(a_position, 1.0);
+    vec3 normal = a_normal;
+    vec4 row0 = vec4(0.0);
+    vec4 row1 = vec4(0.0);
+    vec4 row2 = vec4(0.0);
+    for (int i = 0; i < 4; i++)
+    {
+        int index = int(a_blendIndex[i]) * 3;
+        row0 += (_63.u_matrixPalette[index] * a_blendWeight[i]);
+        row1 += (_63.u_matrixPalette[index + 1] * a_blendWeight[i]);
+        row2 += (_63.u_matrixPalette[index + 2] * a_blendWeight[i]);
+    }
+    position = vec4(dot(row0, position), dot(row1, position), dot(row2, position), 1.0);
+    vec3 c0 = vec3(row0.x, row1.x, row2.x);
+    vec3 c1 = vec3(row0.y, row1.y, row2.y);
+    vec3 c2 = vec3(row0.z, row1.z, row2.z);
+    vec3 n0 = cross(c1, c2);
+    vec3 n1 = cross(c2, c0);
+    vec3 n2 = cross(c0, c1);
+    float determinant = dot(c0, n0);
+    vec3 _157;
+    if (abs(determinant) > 9.9999999747524270787835121154785e-07)
+    {
+        _157 = (mat3(vec3(n0), vec3(n1), vec3(n2)) * normal) / vec3(determinant);
+    }
+    else
+    {
+        _157 = vec3(dot(row0.xyz, normal), dot(row1.xyz, normal), dot(row2.xyz, normal));
+    }
+    normal = _157;
+    v_position = (_63.u_MVMatrix * position).xyz;
+    v_normal = _63.u_NormalMatrix * normal;
+    bool _216 = _63.u_lighting.x > 0.5;
+    bool _223;
+    if (_216)
+    {
+        _223 = _63.u_lighting.x < 1.5;
+    }
+    else
+    {
+        _223 = _216;
+    }
+    bool nativeVertexLighting = _223;
+    v_nativeLighting = vec3(0.0);
+    if (nativeVertexLighting)
+    {
+        vec3 l = normalize((-vec3(_63.u_DirLightSourceDirection[0].x, _63.u_DirLightSourceDirection[0].y, _63.u_DirLightSourceDirection[0].z)) + vec3(9.9999999747524270787835121154785e-07));
+        v_nativeLighting = clamp(_63.u_lightAmbient.xyz + (_63.u_lightDiffuse.xyz * max(dot(normalize(v_normal), l), 0.0)), vec3(0.0), vec3(1.0));
+    }
+    v_vertexColor = a_color;
+    v_uv0 = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    v_uv1 = vec2(a_texCoord1.x, 1.0 - a_texCoord1.y);
+    gl_Position = _63.u_MVPMatrix * position;
+    float _293;
+    if (nativeVertexLighting)
+    {
+        _293 = gl_Position.w;
+    }
+    else
+    {
+        _293 = 1.0;
+    }
+    v_nativeClipW = _293;
+    v_nativeLighting *= v_nativeClipW;
+    v_vertexColor *= v_nativeClipW;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+    mat4 u_MVMatrix;
+    mat3 u_NormalMatrix;
+    vec4 u_lighting;
+    vec4 u_lightDiffuse;
+    vec4 u_lightAmbient;
+    vec4 u_DirLightSourceDirection[1];
+    vec4 u_vertexColor;
+    vec4 u_matrixPalette[180];
+} _63;
+
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+layout(location = 11) in vec4 a_blendIndex;
+layout(location = 12) in vec4 a_blendWeight;
+out vec3 v_position;
+out vec3 v_normal;
+out vec3 v_nativeLighting;
+out vec4 v_vertexColor;
+out vec2 v_uv0;
+layout(location = 2) in vec2 a_texCoord;
+out vec2 v_uv1;
+layout(location = 3) in vec2 a_texCoord1;
+out float v_nativeClipW;
+
+void main()
+{
+    vec4 position = vec4(a_position, 1.0);
+    vec3 normal = a_normal;
+    vec4 row0 = vec4(0.0);
+    vec4 row1 = vec4(0.0);
+    vec4 row2 = vec4(0.0);
+    for (int i = 0; i < 4; i++)
+    {
+        int index = int(a_blendIndex[i]) * 3;
+        row0 += (_63.u_matrixPalette[index] * a_blendWeight[i]);
+        row1 += (_63.u_matrixPalette[index + 1] * a_blendWeight[i]);
+        row2 += (_63.u_matrixPalette[index + 2] * a_blendWeight[i]);
+    }
+    position = vec4(dot(row0, position), dot(row1, position), dot(row2, position), 1.0);
+    vec3 c0 = vec3(row0.x, row1.x, row2.x);
+    vec3 c1 = vec3(row0.y, row1.y, row2.y);
+    vec3 c2 = vec3(row0.z, row1.z, row2.z);
+    vec3 n0 = cross(c1, c2);
+    vec3 n1 = cross(c2, c0);
+    vec3 n2 = cross(c0, c1);
+    float determinant = dot(c0, n0);
+    vec3 _157;
+    if (abs(determinant) > 9.9999999747524270787835121154785e-07)
+    {
+        _157 = (mat3(vec3(n0), vec3(n1), vec3(n2)) * normal) / vec3(determinant);
+    }
+    else
+    {
+        _157 = vec3(dot(row0.xyz, normal), dot(row1.xyz, normal), dot(row2.xyz, normal));
+    }
+    normal = _157;
+    v_position = (_63.u_MVMatrix * position).xyz;
+    v_normal = _63.u_NormalMatrix * normal;
+    bool _216 = _63.u_lighting.x > 0.5;
+    bool _223;
+    if (_216)
+    {
+        _223 = _63.u_lighting.x < 1.5;
+    }
+    else
+    {
+        _223 = _216;
+    }
+    bool nativeVertexLighting = _223;
+    v_nativeLighting = vec3(0.0);
+    if (nativeVertexLighting)
+    {
+        vec3 l = normalize((-vec3(_63.u_DirLightSourceDirection[0].x, _63.u_DirLightSourceDirection[0].y, _63.u_DirLightSourceDirection[0].z)) + vec3(9.9999999747524270787835121154785e-07));
+        v_nativeLighting = clamp(_63.u_lightAmbient.xyz + (_63.u_lightDiffuse.xyz * max(dot(normalize(v_normal), l), 0.0)), vec3(0.0), vec3(1.0));
+    }
+    v_vertexColor = _63.u_vertexColor;
+    v_uv0 = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+    v_uv1 = vec2(a_texCoord1.x, 1.0 - a_texCoord1.y);
+    gl_Position = _63.u_MVPMatrix * position;
+    float _294;
+    if (nativeVertexLighting)
+    {
+        _294 = gl_Position.w;
+    }
+    else
+    {
+        _294 = 1.0;
+    }
+    v_nativeClipW = _294;
+    v_nativeLighting *= v_nativeClipW;
+    v_vertexColor *= v_nativeClipW;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    vec4 u_PointLightSourcePosition[1];
+    vec4 u_SpotLightSourcePosition[1];
+    vec4 u_matrixPalette[180];
+    mat4 u_MVMatrix;
+    mat3 u_NormalMatrix;
+    mat4 u_PMatrix;
+} _49;
+
+layout(location = 12) in vec4 a_blendWeight;
+layout(location = 11) in vec4 a_blendIndex;
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+out vec3 v_vertexToPointLightDirection[1];
+out vec3 v_vertexToSpotLightDirection[1];
+out vec3 v_normal;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void getPositionAndNormal(inout vec4 position, inout vec3 normal, vec3 tangent, vec3 binormal)
+{
+    float blendWeight = a_blendWeight.x;
+    int matrixIndex = int(a_blendIndex.x) * 3;
+    vec4 matrixPalette1 = _49.u_matrixPalette[matrixIndex] * blendWeight;
+    vec4 matrixPalette2 = _49.u_matrixPalette[matrixIndex + 1] * blendWeight;
+    vec4 matrixPalette3 = _49.u_matrixPalette[matrixIndex + 2] * blendWeight;
+    blendWeight = a_blendWeight.y;
+    if (blendWeight > 0.0)
+    {
+        matrixIndex = int(a_blendIndex.y) * 3;
+        matrixPalette1 += (_49.u_matrixPalette[matrixIndex] * blendWeight);
+        matrixPalette2 += (_49.u_matrixPalette[matrixIndex + 1] * blendWeight);
+        matrixPalette3 += (_49.u_matrixPalette[matrixIndex + 2] * blendWeight);
+        blendWeight = a_blendWeight.z;
+        if (blendWeight > 0.0)
+        {
+            matrixIndex = int(a_blendIndex.z) * 3;
+            matrixPalette1 += (_49.u_matrixPalette[matrixIndex] * blendWeight);
+            matrixPalette2 += (_49.u_matrixPalette[matrixIndex + 1] * blendWeight);
+            matrixPalette3 += (_49.u_matrixPalette[matrixIndex + 2] * blendWeight);
+            blendWeight = a_blendWeight.w;
+            if (blendWeight > 0.0)
+            {
+                matrixIndex = int(a_blendIndex.w) * 3;
+                matrixPalette1 += (_49.u_matrixPalette[matrixIndex] * blendWeight);
+                matrixPalette2 += (_49.u_matrixPalette[matrixIndex + 1] * blendWeight);
+                matrixPalette3 += (_49.u_matrixPalette[matrixIndex + 2] * blendWeight);
+            }
+        }
+    }
+    vec4 p = vec4(a_position, 1.0);
+    position.x = dot(p, matrixPalette1);
+    position.y = dot(p, matrixPalette2);
+    position.z = dot(p, matrixPalette3);
+    position.w = p.w;
+    vec4 n = vec4(a_normal, 0.0);
+    normal.x = dot(n, matrixPalette1);
+    normal.y = dot(n, matrixPalette2);
+    normal.z = dot(n, matrixPalette3);
+}
+
+void main()
+{
+    vec4 param;
+    vec3 param_1;
+    vec3 param_2;
+    vec3 param_3;
+    getPositionAndNormal(param, param_1, param_2, param_3);
+    vec4 position = param;
+    vec3 normal = param_1;
+    vec3 tangent = param_2;
+    vec3 binormal = param_3;
+    vec4 ePosition = _49.u_MVMatrix * position;
+    for (int i = 0; i < 1; i++)
+    {
+        v_vertexToPointLightDirection[i] = vec3(_49.u_PointLightSourcePosition[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _49.u_PointLightSourcePosition[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _49.u_PointLightSourcePosition[((i * 3) + 2) / 4][((i * 3) + 2) % 4]) - ePosition.xyz;
+    }
+    for (int i_1 = 0; i_1 < 1; i_1++)
+    {
+        v_vertexToSpotLightDirection[i_1] = vec3(_49.u_SpotLightSourcePosition[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _49.u_SpotLightSourcePosition[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _49.u_SpotLightSourcePosition[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]) - ePosition.xyz;
+    }
+    v_normal = _49.u_NormalMatrix * normal;
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+    gl_Position = _49.u_PMatrix * ePosition;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    vec4 u_DirLightSourceDirection[1];
+    vec4 u_SpotLightSourceDirection[1];
+    vec4 u_PointLightSourcePosition[1];
+    vec4 u_SpotLightSourcePosition[1];
+    vec4 u_matrixPalette[180];
+    mat4 u_MVMatrix;
+    mat3 u_NormalMatrix;
+    mat4 u_PMatrix;
+} _51;
+
+layout(location = 12) in vec4 a_blendWeight;
+layout(location = 11) in vec4 a_blendIndex;
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_normal;
+layout(location = 8) in vec3 a_tangent;
+layout(location = 9) in vec3 a_binormal;
+out vec3 v_dirLightDirection[1];
+out vec3 v_vertexToPointLightDirection[1];
+out vec3 v_vertexToSpotLightDirection[1];
+out vec3 v_spotLightDirection[1];
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+void getPositionAndNormal(inout vec4 position, inout vec3 normal, inout vec3 tangent, inout vec3 binormal)
+{
+    float blendWeight = a_blendWeight.x;
+    int matrixIndex = int(a_blendIndex.x) * 3;
+    vec4 matrixPalette1 = _51.u_matrixPalette[matrixIndex] * blendWeight;
+    vec4 matrixPalette2 = _51.u_matrixPalette[matrixIndex + 1] * blendWeight;
+    vec4 matrixPalette3 = _51.u_matrixPalette[matrixIndex + 2] * blendWeight;
+    blendWeight = a_blendWeight.y;
+    if (blendWeight > 0.0)
+    {
+        matrixIndex = int(a_blendIndex.y) * 3;
+        matrixPalette1 += (_51.u_matrixPalette[matrixIndex] * blendWeight);
+        matrixPalette2 += (_51.u_matrixPalette[matrixIndex + 1] * blendWeight);
+        matrixPalette3 += (_51.u_matrixPalette[matrixIndex + 2] * blendWeight);
+        blendWeight = a_blendWeight.z;
+        if (blendWeight > 0.0)
+        {
+            matrixIndex = int(a_blendIndex.z) * 3;
+            matrixPalette1 += (_51.u_matrixPalette[matrixIndex] * blendWeight);
+            matrixPalette2 += (_51.u_matrixPalette[matrixIndex + 1] * blendWeight);
+            matrixPalette3 += (_51.u_matrixPalette[matrixIndex + 2] * blendWeight);
+            blendWeight = a_blendWeight.w;
+            if (blendWeight > 0.0)
+            {
+                matrixIndex = int(a_blendIndex.w) * 3;
+                matrixPalette1 += (_51.u_matrixPalette[matrixIndex] * blendWeight);
+                matrixPalette2 += (_51.u_matrixPalette[matrixIndex + 1] * blendWeight);
+                matrixPalette3 += (_51.u_matrixPalette[matrixIndex + 2] * blendWeight);
+            }
+        }
+    }
+    vec4 p = vec4(a_position, 1.0);
+    position.x = dot(p, matrixPalette1);
+    position.y = dot(p, matrixPalette2);
+    position.z = dot(p, matrixPalette3);
+    position.w = p.w;
+    vec4 n = vec4(a_normal, 0.0);
+    normal.x = dot(n, matrixPalette1);
+    normal.y = dot(n, matrixPalette2);
+    normal.z = dot(n, matrixPalette3);
+    vec4 t = vec4(a_tangent, 0.0);
+    tangent.x = dot(t, matrixPalette1);
+    tangent.y = dot(t, matrixPalette2);
+    tangent.z = dot(t, matrixPalette3);
+    vec4 b = vec4(a_binormal, 0.0);
+    binormal.x = dot(b, matrixPalette1);
+    binormal.y = dot(b, matrixPalette2);
+    binormal.z = dot(b, matrixPalette3);
+}
+
+void main()
+{
+    vec4 param;
+    vec3 param_1;
+    vec3 param_2;
+    vec3 param_3;
+    getPositionAndNormal(param, param_1, param_2, param_3);
+    vec4 position = param;
+    vec3 normal = param_1;
+    vec3 tangent = param_2;
+    vec3 binormal = param_3;
+    vec4 ePosition = _51.u_MVMatrix * position;
+    vec3 eTangent = normalize(_51.u_NormalMatrix * tangent);
+    vec3 eBinormal = normalize(_51.u_NormalMatrix * binormal);
+    vec3 eNormal = normalize(_51.u_NormalMatrix * normal);
+    for (int i = 0; i < 1; i++)
+    {
+        vec3 pointD = vec3(_51.u_DirLightSourceDirection[((i * 3) + 0) / 4][((i * 3) + 0) % 4], _51.u_DirLightSourceDirection[((i * 3) + 1) / 4][((i * 3) + 1) % 4], _51.u_DirLightSourceDirection[((i * 3) + 2) / 4][((i * 3) + 2) % 4]);
+        v_dirLightDirection[i].x = dot(eTangent, pointD);
+        v_dirLightDirection[i].y = dot(eBinormal, pointD);
+        v_dirLightDirection[i].z = dot(eNormal, pointD);
+    }
+    for (int i_1 = 0; i_1 < 1; i_1++)
+    {
+        vec3 pointLightDir = vec3(_51.u_PointLightSourcePosition[((i_1 * 3) + 0) / 4][((i_1 * 3) + 0) % 4], _51.u_PointLightSourcePosition[((i_1 * 3) + 1) / 4][((i_1 * 3) + 1) % 4], _51.u_PointLightSourcePosition[((i_1 * 3) + 2) / 4][((i_1 * 3) + 2) % 4]) - ePosition.xyz;
+        v_vertexToPointLightDirection[i_1].x = dot(eTangent, pointLightDir);
+        v_vertexToPointLightDirection[i_1].y = dot(eBinormal, pointLightDir);
+        v_vertexToPointLightDirection[i_1].z = dot(eNormal, pointLightDir);
+    }
+    for (int i_2 = 0; i_2 < 1; i_2++)
+    {
+        vec3 spotLightDir = vec3(_51.u_SpotLightSourcePosition[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _51.u_SpotLightSourcePosition[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _51.u_SpotLightSourcePosition[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]) - ePosition.xyz;
+        v_vertexToSpotLightDirection[i_2].x = dot(eTangent, spotLightDir);
+        v_vertexToSpotLightDirection[i_2].y = dot(eBinormal, spotLightDir);
+        v_vertexToSpotLightDirection[i_2].z = dot(eNormal, spotLightDir);
+        vec3 pointP = vec3(_51.u_SpotLightSourceDirection[((i_2 * 3) + 0) / 4][((i_2 * 3) + 0) % 4], _51.u_SpotLightSourceDirection[((i_2 * 3) + 1) / 4][((i_2 * 3) + 1) % 4], _51.u_SpotLightSourceDirection[((i_2 * 3) + 2) / 4][((i_2 * 3) + 2) % 4]);
+        v_spotLightDirection[i_2].x = dot(eTangent, pointP);
+        v_spotLightDirection[i_2].y = dot(eBinormal, pointP);
+        v_spotLightDirection[i_2].z = dot(eNormal, pointP);
+    }
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+    gl_Position = _51.u_PMatrix * ePosition;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    vec4 u_matrixPalette[180];
+    mat4 u_MVPMatrix;
+} _39;
+
+layout(location = 12) in vec4 a_blendWeight;
+layout(location = 11) in vec4 a_blendIndex;
+layout(location = 0) in vec3 a_position;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+
+vec4 getPosition()
+{
+    float blendWeight = a_blendWeight.x;
+    int matrixIndex = int(a_blendIndex.x) * 3;
+    vec4 matrixPalette1 = _39.u_matrixPalette[matrixIndex] * blendWeight;
+    vec4 matrixPalette2 = _39.u_matrixPalette[matrixIndex + 1] * blendWeight;
+    vec4 matrixPalette3 = _39.u_matrixPalette[matrixIndex + 2] * blendWeight;
+    blendWeight = a_blendWeight.y;
+    if (blendWeight > 0.0)
+    {
+        matrixIndex = int(a_blendIndex.y) * 3;
+        matrixPalette1 += (_39.u_matrixPalette[matrixIndex] * blendWeight);
+        matrixPalette2 += (_39.u_matrixPalette[matrixIndex + 1] * blendWeight);
+        matrixPalette3 += (_39.u_matrixPalette[matrixIndex + 2] * blendWeight);
+        blendWeight = a_blendWeight.z;
+        if (blendWeight > 0.0)
+        {
+            matrixIndex = int(a_blendIndex.z) * 3;
+            matrixPalette1 += (_39.u_matrixPalette[matrixIndex] * blendWeight);
+            matrixPalette2 += (_39.u_matrixPalette[matrixIndex + 1] * blendWeight);
+            matrixPalette3 += (_39.u_matrixPalette[matrixIndex + 2] * blendWeight);
+            blendWeight = a_blendWeight.w;
+            if (blendWeight > 0.0)
+            {
+                matrixIndex = int(a_blendIndex.w) * 3;
+                matrixPalette1 += (_39.u_matrixPalette[matrixIndex] * blendWeight);
+                matrixPalette2 += (_39.u_matrixPalette[matrixIndex + 1] * blendWeight);
+                matrixPalette3 += (_39.u_matrixPalette[matrixIndex + 2] * blendWeight);
+            }
+        }
+    }
+    vec4 position = vec4(a_position, 1.0);
+    vec4 _skinnedPosition;
+    _skinnedPosition.x = dot(position, matrixPalette1);
+    _skinnedPosition.y = dot(position, matrixPalette2);
+    _skinnedPosition.z = dot(position, matrixPalette3);
+    _skinnedPosition.w = position.w;
+    return _skinnedPosition;
+}
+
+void main()
+{
+    vec4 position = getPosition();
+    gl_Position = _39.u_MVPMatrix * position;
+    v_texCoord = a_texCoord;
+    v_texCoord.y = 1.0 - v_texCoord.y;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp vec4 u_color;
+} _24;
+
+uniform mediump samplerCube u_Env;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec3 v_reflect;
+
+void main()
+{
+    FragColor = texture(u_Env, v_reflect) * _24.u_color;
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_cameraRot;
+} _15;
+
+layout(location = 0) in vec3 a_position;
+out vec3 v_reflect;
+
+void main()
+{
+    vec4 _reflect = _15.u_cameraRot * vec4(a_position, 1.0);
+    v_reflect = _reflect.xyz;
+    gl_Position = vec4(a_position.xy, 1.0, 1.0);
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    int u_has_alpha;
+    int u_has_light_map;
+    highp vec4 u_detailSize[1];
+    highp vec3 u_lightDir;
+} _18;
+
+uniform mediump sampler2D u_lightMap;
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_alphaMap;
+uniform mediump sampler2D u_tex1;
+uniform mediump sampler2D u_tex2;
+uniform mediump sampler2D u_tex3;
+
+in highp vec2 v_texCoord;
+in highp vec3 v_normal;
+layout(location = 0) out highp vec4 FragColor;
+
+void main()
+{
+    highp vec4 lightColor;
+    if (_18.u_has_light_map <= 0)
+    {
+        lightColor = vec4(1.0);
+    }
+    else
+    {
+        lightColor = texture(u_lightMap, v_texCoord);
+    }
+    highp float lightFactor = dot(-_18.u_lightDir, v_normal);
+    if (_18.u_has_alpha <= 0)
+    {
+        FragColor = (texture(u_tex0, v_texCoord) * lightColor) * lightFactor;
+    }
+    else
+    {
+        highp vec4 blendFactor = texture(u_alphaMap, v_texCoord);
+        highp vec4 color = vec4(0.0);
+        color = (((texture(u_tex0, v_texCoord * _18.u_detailSize[0].x) * blendFactor.x) + (texture(u_tex1, v_texCoord * _18.u_detailSize[0].y) * blendFactor.y)) + (texture(u_tex2, v_texCoord * _18.u_detailSize[0].z) * blendFactor.z)) + (texture(u_tex3, v_texCoord * _18.u_detailSize[0].w) * (1.0 - blendFactor.w));
+        FragColor = vec4((color.xyz * lightColor.xyz) * lightFactor, 1.0);
+    }
+}
+
+#version 300 es
+
+layout(std140) uniform vs_ub
+{
+    mat4 u_MVPMatrix;
+} _18;
+
+layout(location = 0) in vec4 a_position;
+out vec2 v_texCoord;
+layout(location = 2) in vec2 a_texCoord;
+out vec3 v_normal;
+layout(location = 1) in vec3 a_normal;
+
+void main()
+{
+    gl_Position = _18.u_MVPMatrix * a_position;
+    v_texCoord = a_texCoord;
+    v_normal = a_normal;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform mediump sampler2D u_tex0;
+
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+in highp vec2 v_texCoord;
+
+void main()
+{
+    FragColor = v_color * texture(u_tex0, v_texCoord).zyxw;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp mat4 colorTransform;
+} _98;
+
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_tex1;
+uniform mediump sampler2D u_tex2;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+highp vec3 trasnformYUV(inout highp vec3 YUV, highp mat4 colorTransform)
+{
+    YUV -= vec3(colorTransform[0].w, colorTransform[1].w, colorTransform[2].w);
+    return mat3(vec3(colorTransform[0].xyz), vec3(colorTransform[1].xyz), vec3(colorTransform[2].xyz)) * YUV;
+}
+
+void main()
+{
+    highp vec3 YUV;
+    YUV.x = texture(u_tex0, v_texCoord).x;
+    YUV.y = texture(u_tex1, v_texCoord).x;
+    YUV.z = texture(u_tex2, v_texCoord).x;
+    highp vec3 param = YUV;
+    highp mat4 param_1 = _98.colorTransform;
+    highp vec3 _105 = trasnformYUV(param, param_1);
+    highp vec4 OutColor;
+    OutColor.x = _105.x;
+    OutColor.y = _105.y;
+    OutColor.z = _105.z;
+    OutColor.w = 1.0;
+    FragColor = v_color * OutColor;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp mat4 colorTransform;
+} _95;
+
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_tex1;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+highp vec3 trasnformYUV(inout highp vec3 YUV, highp mat4 colorTransform)
+{
+    YUV -= vec3(colorTransform[0].w, colorTransform[1].w, colorTransform[2].w);
+    return mat3(vec3(colorTransform[0].xyz), vec3(colorTransform[1].xyz), vec3(colorTransform[2].xyz)) * YUV;
+}
+
+void main()
+{
+    highp vec3 YUV;
+    YUV.x = texture(u_tex0, v_texCoord).x;
+    vec2 _85 = texture(u_tex1, v_texCoord).xy;
+    YUV.y = _85.x;
+    YUV.z = _85.y;
+    highp vec3 param = YUV;
+    highp mat4 param_1 = _95.colorTransform;
+    highp vec3 _102 = trasnformYUV(param, param_1);
+    highp vec4 OutColor;
+    OutColor.x = _102.x;
+    OutColor.y = _102.y;
+    OutColor.z = _102.z;
+    OutColor.w = 1.0;
+    FragColor = v_color * OutColor;
+}
+
+#version 300 es
+precision mediump float;
+precision highp int;
+
+layout(std140) uniform fs_ub
+{
+    highp mat4 colorTransform;
+} _94;
+
+uniform mediump sampler2D u_tex0;
+uniform mediump sampler2D u_tex1;
+
+in highp vec2 v_texCoord;
+layout(location = 0) out highp vec4 FragColor;
+in highp vec4 v_color;
+
+highp vec3 trasnformYUV(inout highp vec3 YUV, highp mat4 colorTransform)
+{
+    YUV -= vec3(colorTransform[0].w, colorTransform[1].w, colorTransform[2].w);
+    return mat3(vec3(colorTransform[0].xyz), vec3(colorTransform[1].xyz), vec3(colorTransform[2].xyz)) * YUV;
+}
+
+void main()
+{
+    highp vec3 YUV;
+    YUV.x = texture(u_tex0, v_texCoord).x;
+    vec2 _84 = texture(u_tex1, v_texCoord).yw;
+    YUV.y = _84.x;
+    YUV.z = _84.y;
+    highp vec3 param = YUV;
+    highp mat4 param_1 = _94.colorTransform;
+    highp vec3 _101 = trasnformYUV(param, param_1);
+    highp vec4 OutColor;
+    OutColor.x = _101.x;
+    OutColor.y = _101.y;
+    OutColor.z = _101.z;
+    OutColor.w = 1.0;
+    FragColor = v_color * OutColor;
+}
+

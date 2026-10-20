@@ -1,0 +1,9 @@
+{
+  "build": "1",
+  "content": "f3f41e6f8325d406",
+  "format": "power.online",
+  "game": "smash",
+  "mode": "casual",
+  "server": "wss://sagas.cybertwip.com/ws",
+  "version": 1
+}
